@@ -9,7 +9,7 @@ local customAlerts = require("libs/CustomAlerts")
 local unitGroupUtils = require("libs/UnitGroupUtils")
 
 -- Strike configuration
-strikeManager.STRIKE_COOLDOWN_DURATION = 15 * 60 * 60  -- 15 minutes in ticks (60 ticks/sec)
+strikeManager.STRIKE_COOLDOWN_DURATION = 2 * 60 * 60  -- 2 minutes in ticks (60 ticks/sec) [TESTING]
 strikeManager.STRIKE_ENABLED_EVOLUTION = 0.20  -- 20% evolution
 strikeManager.SQUADS_PER_STRIKE = 3
 

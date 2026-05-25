@@ -3,6 +3,12 @@ if debugCommandsG then
 end
 local debugCommands = {}
 
+local function writeOutputFile(filename, lines)
+    local content = table.concat(lines, "\n")
+    game.write_file(filename, content)
+    return content
+end
+
 local zoneManager = require("libs/ZoneManager")
 local constants = require("libs/Constants")
 
@@ -105,9 +111,10 @@ function debugCommands.printZoneStats(map)
         return
     end
 
-    game.print("=== ZONE STATISTICS ===")
-    game.print("Total zones: " .. #map.zonesByIndex)
-    game.print("Global production rate: " .. string.format("%.2f", map.globalTotalRate or 0) .. " items/s")
+    local lines = {}
+    table.insert(lines, "=== ZONE STATISTICS ===")
+    table.insert(lines, "Total zones: " .. #map.zonesByIndex)
+    table.insert(lines, "Global production rate: " .. string.format("%.2f", map.globalTotalRate or 0) .. " items/s")
 
     local activeZones = 0
     local topZones = {}
@@ -121,22 +128,27 @@ function debugCommands.printZoneStats(map)
         end
     end
 
-    game.print("Scan phase distribution: Phase0=" .. scanPhases[1] .. " Phase1=" .. scanPhases[2] .. " Phase2=" .. scanPhases[3] .. " Phase3=" .. scanPhases[4])
-    game.print("Active zones: " .. activeZones)
+    table.insert(lines, "Scan phase distribution: Phase0=" .. scanPhases[1] .. " Phase1=" .. scanPhases[2] .. " Phase2=" .. scanPhases[3] .. " Phase3=" .. scanPhases[4])
+    table.insert(lines, "Active zones: " .. activeZones)
 
     table.sort(topZones, function(a, b) return a.totalRate > b.totalRate end)
 
     for i = 1, math.min(5, #topZones) do
         local zone = topZones[i]
         local share = zone.relativeShare * 100
-        game.print(string.format(
+        table.insert(lines, string.format(
             "  Zone[%d,%d]: %.1f items/s (%.1f%%)",
             zone.zx, zone.zy, zone.totalRate, share
         ))
     end
 
     if activeZones == 0 and scanPhases[1] == #map.zonesByIndex then
-        game.print("WARNING: All zones still in Phase 0. Scanning may not be running.")
+        table.insert(lines, "WARNING: All zones still in Phase 0. Scanning may not be running.")
+    end
+
+    writeOutputFile("rampant2-zones.txt", lines)
+    for _, line in ipairs(lines) do
+        game.print(line)
     end
 end
 
@@ -146,13 +158,19 @@ function debugCommands.printTargets(map)
         return
     end
 
-    game.print("=== PRIORITY TARGETS ===")
+    local lines = {}
+    table.insert(lines, "=== PRIORITY TARGETS ===")
     for i, target in ipairs(map.priorityTargets) do
         local share = target.relativeShare * 100
-        game.print(string.format(
+        table.insert(lines, string.format(
             "  #%d at [%.0f, %.0f]: %.1f%% (top: %s)",
             i, target.centerX, target.centerY, share, target.topItem or "none"
         ))
+    end
+
+    writeOutputFile("rampant2-targets.txt", lines)
+    for _, line in ipairs(lines) do
+        game.print(line)
     end
 end
 
@@ -169,27 +187,33 @@ function debugCommands.findEnemyStructures(player)
     local allPlayer = surface.find_entities_filtered({force = "player"})
     local allEnemy = surface.find_entities_filtered({force = "enemy"})
 
-    game.print("=== ENTITY COUNTS ===")
-    game.print("Player force total: " .. #allPlayer)
-    game.print("Enemy force total: " .. #allEnemy)
+    local lines = {}
+    table.insert(lines, "=== ENTITY COUNTS ===")
+    table.insert(lines, "Player force total: " .. #allPlayer)
+    table.insert(lines, "Enemy force total: " .. #allEnemy)
 
     local assemblers = surface.find_entities_filtered({type = "assembling-machine"})
     local furnaces = surface.find_entities_filtered({type = "furnace"})
     local drills = surface.find_entities_filtered({type = "mining-drill"})
 
-    game.print("All production buildings (any force):")
-    game.print("  Assemblers: " .. #assemblers)
-    game.print("  Furnaces: " .. #furnaces)
-    game.print("  Drills: " .. #drills)
+    table.insert(lines, "All production buildings (any force):")
+    table.insert(lines, "  Assemblers: " .. #assemblers)
+    table.insert(lines, "  Furnaces: " .. #furnaces)
+    table.insert(lines, "  Drills: " .. #drills)
 
     if #assemblers > 0 then
-        game.print("  First assembler force: " .. assemblers[1].force.name)
+        table.insert(lines, "  First assembler force: " .. assemblers[1].force.name)
     end
     if #furnaces > 0 then
-        game.print("  First furnace force: " .. furnaces[1].force.name)
+        table.insert(lines, "  First furnace force: " .. furnaces[1].force.name)
     end
     if #drills > 0 then
-        game.print("  First drill force: " .. drills[1].force.name)
+        table.insert(lines, "  First drill force: " .. drills[1].force.name)
+    end
+
+    writeOutputFile("rampant2-structures.txt", lines)
+    for _, line in ipairs(lines) do
+        game.print(line)
     end
 end
 

@@ -11,7 +11,7 @@ local mMax = math.max
 local mMin = math.min
 
 -- Zone configuration
-zoneManager.ZONE_CHUNK_SIZE = 10  -- 10 chunks = 320×320 tiles
+zoneManager.ZONE_CHUNK_SIZE = 2  -- 2 chunks = 64×64 tiles
 zoneManager.ZONE_TILE_SIZE = zoneManager.ZONE_CHUNK_SIZE * CHUNK_SIZE
 zoneManager.ZONE_RESCAN_INTERVAL = 18000  -- 5 minutes at 60 ticks/sec
 

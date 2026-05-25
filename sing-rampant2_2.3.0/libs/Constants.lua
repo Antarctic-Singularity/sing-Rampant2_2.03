@@ -112,7 +112,7 @@ constants.EVOLUTION_INCREMENTS = 0.05
 constants.DIVISOR_DEATH_TRAIL_TABLE = { 0.75, 0.65, 0.55, 0.45, 0.35 }
 
 -- zone scanning
-constants.ZONE_SIZE_CHUNKS = 10
+constants.ZONE_SIZE_CHUNKS = 2
 constants.ZONE_TILE_SIZE = constants.ZONE_SIZE_CHUNKS * constants.CHUNK_SIZE
 constants.ZONE_RESCAN_INTERVAL = 18000
 constants.PRIORITY_TARGET_COUNT = 3

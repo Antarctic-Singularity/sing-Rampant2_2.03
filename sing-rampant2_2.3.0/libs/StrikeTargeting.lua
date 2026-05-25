@@ -154,17 +154,54 @@ function strikeTargeting.countAdjacentEmptyZones(map, zone)
     return emptyCount
 end
 
+function strikeTargeting.dominatesAdjacentZones(map, zone)
+    -- Check if zone has at least 2x the military buildings of EACH adjacent zone
+    -- Returns true only if zone dominates all adjacent zones individually
+    if not map or not map.zones or not zone then
+        return false
+    end
+
+    local zx, zy = zone.zx, zone.zy
+    local zoneBuildings = zone.militaryBuildingCount or 0
+
+    if zoneBuildings < 8 then
+        return false  -- Need at least 8 buildings minimum
+    end
+
+    -- Check all 8 adjacent positions
+    for dx = -1, 1 do
+        for dy = -1, 1 do
+            if dx ~= 0 or dy ~= 0 then  -- skip self
+                local neighborZone = map.zones[zx + dx] and map.zones[zx + dx][zy + dy]
+                if neighborZone then
+                    local neighborBuildings = neighborZone.militaryBuildingCount or 0
+                    -- Must have more than 2x each neighbor's buildings
+                    if zoneBuildings <= neighborBuildings * 2 then
+                        return false  -- Doesn't dominate this neighbor
+                    end
+                end
+            end
+        end
+    end
+
+    return true  -- Dominates all adjacent zones
+end
+
 function strikeTargeting.getZoneCategory(zone, map)
     -- Returns the PRIMARY category this zone belongs to
     if not zone then
         return nil
     end
 
-    -- If zone has 8+ military buildings AND 6+ adjacent empty zones, it's an outpost
+    -- If zone has 8+ military buildings AND dominates adjacent zones AND 6+ empty adjacent zones, it's an outpost
     if zone.militaryBuildingCount and zone.militaryBuildingCount >= 8 and map then
-        local emptyAdjacent = strikeTargeting.countAdjacentEmptyZones(map, zone)
-        if emptyAdjacent >= 6 then
-            return "outpost"
+        -- Must have at least 2x the building count of each adjacent zone individually
+        if strikeTargeting.dominatesAdjacentZones(map, zone) then
+            -- Also must have 6+ adjacent empty zones for isolation confirmation
+            local emptyAdjacent = strikeTargeting.countAdjacentEmptyZones(map, zone)
+            if emptyAdjacent >= 6 then
+                return "outpost"
+            end
         end
     end
 

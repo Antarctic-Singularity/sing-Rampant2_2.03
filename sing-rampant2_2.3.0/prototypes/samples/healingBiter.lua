@@ -15,7 +15,7 @@ data:extend({
 	    show_when_smoke_off = true,
 	    animation =
 		{
-		    filename = "__RampantFixed__/graphics/entities/cloud/cloud-45-frames.png",
+		    filename = "__sing-rampant2__/graphics/entities/cloud/cloud-45-frames.png",
 		    flags = { "always-compressed" },
 		    priority = "low",
 		    width = 256,

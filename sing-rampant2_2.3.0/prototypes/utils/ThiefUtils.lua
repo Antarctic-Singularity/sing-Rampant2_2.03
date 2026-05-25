@@ -10,7 +10,7 @@ function thiefUtils.makeDrainCrystal(attributes)
             {
                 type = "item",
                 name = itemName,
-                icon = "__RampantFixed__/graphics/icons/thief/crystal-drain.png",
+                icon = "__sing-rampant2__/graphics/icons/thief/crystal-drain.png",
                 icon_size = 32,
                 -- flags = {"hidden"},
                 subgroup = "energy",
@@ -23,7 +23,7 @@ function thiefUtils.makeDrainCrystal(attributes)
             {
                 type = "radar",
                 name = name,
-                icon = "__RampantFixed__/graphics/icons/thief/crystal-drain.png",
+                icon = "__sing-rampant2__/graphics/icons/thief/crystal-drain.png",
                 icon_size = 32,
                 flags = {"placeable-enemy"},
                 minable = {hardness = 0.2, mining_time = 0.5, result = itemName},
@@ -61,7 +61,7 @@ function thiefUtils.makeDrainCrystal(attributes)
                 energy_usage = attributes.drain or "500kW",
                 pictures =
                     {
-                        filename = "__RampantFixed__/graphics/entities/thief/crystal-drain.png",
+                        filename = "__sing-rampant2__/graphics/entities/thief/crystal-drain.png",
                         priority = "low",
                         width = 128,
                         height = 128,

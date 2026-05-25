@@ -209,9 +209,9 @@ end
 function setIcons(entityTable, attributes)
 	local iconName
 	if attributes.tier < 10 then
-		iconName = "__RampantFixed__/graphics/icons/signal/signal_"..attributes.tier..".png"
+		iconName = "__sing-rampant2__/graphics/icons/signal/signal_"..attributes.tier..".png"
 	else
-		iconName = "__RampantFixed__/graphics/icons/signal/signal_A.png"
+		iconName = "__sing-rampant2__/graphics/icons/signal/signal_A.png"
 	end
 	entityTable.icons = {{icon = entityTable.icon, icon_size = entityTable.icon_size, tint = attributes.tint}}
 	entityTable.icons[#entityTable.icons+1] = 
@@ -1659,14 +1659,14 @@ function biterFunctions.createStreamAttack(attributes, fireAttack, animation)
                 middle_sound =
                     {
                         {
-                            filename = attributes.midSound or "__RampantFixed__/sounds/attacks/acid-mid.ogg",
+                            filename = attributes.midSound or "__sing-rampant2__/sounds/attacks/acid-mid.ogg",
                             volume = 0.2 + (attributes.effectiveLevel * 0.05)
                         }
                     },
                 end_sound =
                     {
                         {
-                            filename = attributes.endSound or "__RampantFixed__/sounds/attacks/acid-end.ogg",
+                            filename = attributes.endSound or "__sing-rampant2__/sounds/attacks/acid-end.ogg",
                             volume = 0.2 + (attributes.effectiveLevel * 0.05)
                         }
                     }

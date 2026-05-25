@@ -171,7 +171,7 @@ data:extend(
   {
     type = "virtual-signal",
     name = "undergroundPass-warning-rampant",
-    icons = {{icon = "__RampantFixed__/graphics/icons/alerts/underground-icon.png", icon_size = 64}}
+    icons = {{icon = "__sing-rampant2__/graphics/icons/alerts/underground-icon.png", icon_size = 64}}
   }
 }
 )
@@ -180,7 +180,7 @@ data:extend(
   {
     type = "virtual-signal",
     name = "undergroundDigout-warning-rampant",
-    icons = {{icon = "__RampantFixed__/graphics/icons/alerts/underground-icon2.png", icon_size = 64}}
+    icons = {{icon = "__sing-rampant2__/graphics/icons/alerts/underground-icon2.png", icon_size = 64}}
   }
 }
 )
@@ -199,7 +199,7 @@ data:extend(
   {
     type = "virtual-signal",
     name = "demolisherAttack-warning-rampant",
-    icons = {{icon = "__RampantFixed__/graphics/icons/alerts/demolisherAttack-icon.png", icon_size = 64}}	
+    icons = {{icon = "__sing-rampant2__/graphics/icons/alerts/demolisherAttack-icon.png", icon_size = 64}}	
   }
 }
 )

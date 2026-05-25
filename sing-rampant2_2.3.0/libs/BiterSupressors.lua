@@ -16,8 +16,8 @@ function biterSupressor.addEntities()
 		newEntities[#newEntities + 1] = {
 			type = "radar",
 			name = "biterSupressor"..supressorData.number.."-rampant",
-			icon = "__RampantFixed__/graphics/icons/lightning-rod.png",
-			icons = {{icon = "__RampantFixed__/graphics/icons/lightning-rod.png", tint = supressorData.tint}},
+			icon = "__sing-rampant2__/graphics/icons/lightning-rod.png",
+			icons = {{icon = "__sing-rampant2__/graphics/icons/lightning-rod.png", tint = supressorData.tint}},
 			flags = {"placeable-player", "player-creation"},
 			minable = {mining_time = 1, result = "biterSupressor"..supressorData.number.."-rampant"},
 			max_health = 200,
@@ -57,7 +57,7 @@ function biterSupressor.addEntities()
 				layers = 
 				{
 					{
-						filename = "__RampantFixed__/graphics/entities/lightning-rod/lightning-rod.png",
+						filename = "__sing-rampant2__/graphics/entities/lightning-rod/lightning-rod.png",
 						priority = "extra-high",
 						size = {108,352},
 						width = 12,
@@ -69,7 +69,7 @@ function biterSupressor.addEntities()
 						scale = 1
 					},
 					{
-						filename = "__RampantFixed__/graphics/entities/lightning-rod/lightning-rod.png",
+						filename = "__sing-rampant2__/graphics/entities/lightning-rod/lightning-rod.png",
 						priority = "high",
 						size = {108,352},
 						width = 12,
@@ -82,7 +82,7 @@ function biterSupressor.addEntities()
 						tint = supressorData.tint 
 					}
 					-- {
-						-- filename = "__RampantFixed__/graphics/entities/lightning-rod/lightning-rod-discharge.png",
+						-- filename = "__sing-rampant2__/graphics/entities/lightning-rod/lightning-rod-discharge.png",
 						-- priority = "high",
 						-- size = {108,352},
 						-- width = 12,
@@ -116,8 +116,8 @@ function biterSupressor.addEntities()
 		{
 			type = "item",
 			name = "biterSupressor"..supressorData.number.."-rampant",
-			icon = "__RampantFixed__/graphics/icons/lightning-rod.png",
-			icons = {{icon = "__RampantFixed__/graphics/icons/lightning-rod.png", tint = supressorData.tint}},
+			icon = "__sing-rampant2__/graphics/icons/lightning-rod.png",
+			icons = {{icon = "__sing-rampant2__/graphics/icons/lightning-rod.png", tint = supressorData.tint}},
 			icon_mipmaps = 1,
 			-- flags = {"not-in-made-in"},
 			subgroup = "space-related",
@@ -145,8 +145,8 @@ function biterSupressor.addEntities()
 		-- {
 			-- type = "item",
 			-- name = "biterSupressor"..supressorData.number.."-rampant",
-			-- icon = "__RampantFixed__/graphics/icons/lightning-rod.png",
-			-- icons = {{icon = "__RampantFixed__/graphics/icons/lightning-rod.png", tint = supressorData.tint}},
+			-- icon = "__sing-rampant2__/graphics/icons/lightning-rod.png",
+			-- icons = {{icon = "__sing-rampant2__/graphics/icons/lightning-rod.png", tint = supressorData.tint}},
 			-- icon_mipmaps = 1,
 			-- -- flags = {"not-in-made-in"},
 			-- subgroup = "space-related",

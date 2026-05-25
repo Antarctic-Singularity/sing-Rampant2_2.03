@@ -1,4 +1,4 @@
-local constants = require ("__RampantFixed__.libs.Constants")
+local constants = require ("__sing-rampant2__.libs.Constants")
 local FACTION_SET = constants.FACTION_SET
 
 local immunityUpdates = {}

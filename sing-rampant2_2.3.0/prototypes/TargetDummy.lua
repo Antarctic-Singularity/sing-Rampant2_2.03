@@ -11,7 +11,7 @@ function targetDummy.addTargetDummies()
             {
                 type = "radar",
                 name = "targetDummyPlasma-rampant",
-                icon = "__RampantFixed__/graphics/icons/thief/crystal-drain.png",
+                icon = "__sing-rampant2__/graphics/icons/thief/crystal-drain.png",
                 icon_size = 32,
                 flags = {"placeable-enemy"},
                 minable = nil,
@@ -49,7 +49,7 @@ function targetDummy.addTargetDummies()
                 energy_usage = "100kJ",
                 pictures =
                     {
-                        filename = "__RampantFixed__/graphics/entities/thief/crystal-drain.png",
+                        filename = "__sing-rampant2__/graphics/entities/thief/crystal-drain.png",
                         priority = "low",
                         width = 128,
                         height = 128,

@@ -8,7 +8,7 @@ local unitGroupUtils = {}
 local mapUtils = require("MapUtils")
 local constants = require("Constants")
 local chunkPropertyUtils = require("ChunkPropertyUtils")
-local config = require("__RampantFixed__/config")
+local config = require("__sing-rampant2__/config")
 
 -- constants
 

@@ -15,7 +15,7 @@ data:extend({
     pictures =
     {
       {
-        filename = "__RampantFixed__/graphics/entities/tunnel/tunnelEntrance.png",
+        filename = "__sing-rampant2__/graphics/entities/tunnel/tunnelEntrance.png",
         width = 142,
         height = 104,
         shift = {0, 0}

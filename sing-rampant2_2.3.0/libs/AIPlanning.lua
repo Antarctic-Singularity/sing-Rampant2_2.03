@@ -7,7 +7,7 @@ local aiPlanning = {}
 
 local constants = require("Constants")
 local mathUtils = require("MathUtils")
-local config = require("__RampantFixed__/config")
+local config = require("__sing-rampant2__/config")
 
 -- local aiPredicates = require("AIPredicates")
 

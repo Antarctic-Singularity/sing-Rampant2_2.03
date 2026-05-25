@@ -305,7 +305,7 @@ function powerup.makePowerup_capsule()
                 type = "capsule",
                 name = "powerup-Combat5min-Capsule-rampantFixed",
 				localised_description = {"item-description.powerup-Combat5min-Capsule-rampantFixed"},
-                icons = {{icon = "__RampantFixed__/graphics/icons/powerup.png", tint = {r=1, g=0.7, b=0, a=1}, icon_size = 32}},
+                icons = {{icon = "__sing-rampant2__/graphics/icons/powerup.png", tint = {r=1, g=0.7, b=0, a=1}, icon_size = 32}},
                 flags = {},
                 capsule_action = 
 				{
@@ -369,7 +369,7 @@ function powerup.make_RegenerationCrystal()
             {
                 type = "radar",
                 name = "regenerationCrystal-rampantFixed",
-                icons = {{icon = "__RampantFixed__/graphics/icons/thief/crystal-drain.png", tint = {r=0.1, g=0.7, b=0, a=0.5}, icon_size = 32}},
+                icons = {{icon = "__sing-rampant2__/graphics/icons/thief/crystal-drain.png", tint = {r=0.1, g=0.7, b=0, a=0.5}, icon_size = 32}},
 				flags = {"placeable-player", "player-creation"},
 				minable = {mining_time = 5, result = "regenerationCrystal-rampantFixed"},
                 max_health = 3000,
@@ -390,7 +390,7 @@ function powerup.make_RegenerationCrystal()
                 energy_usage = "20kJ",
                 pictures =
                     {
-                        filename = "__RampantFixed__/graphics/entities/thief/crystal-drain.png",
+                        filename = "__sing-rampant2__/graphics/entities/thief/crystal-drain.png",
 						tint = {r=0.1, g=0.7, b=0, a=0.5},
                         priority = "low",
                         width = 128,
@@ -409,7 +409,7 @@ function powerup.make_RegenerationCrystal()
 			{
 			type = "item",
 			name = "regenerationCrystal-rampantFixed",
-            icons = {{icon = "__RampantFixed__/graphics/icons/thief/crystal-drain.png", tint = {r=0.1, g=0.7, b=0, a=0.5}, icon_size = 32}},
+            icons = {{icon = "__sing-rampant2__/graphics/icons/thief/crystal-drain.png", tint = {r=0.1, g=0.7, b=0, a=0.5}, icon_size = 32}},
 			subgroup = "defensive-structure",
 			order = "a[powerup]-a[regenerationCrystal]",
 			place_result = "regenerationCrystal-rampantFixed",

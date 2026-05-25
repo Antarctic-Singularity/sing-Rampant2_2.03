@@ -21,7 +21,7 @@ local chunkPropertyUtils = require("libs/ChunkPropertyUtils")
 local constants = require("libs/Constants")
 local mapProcessor = require("libs/MapProcessor")
 local mapUtils = require("libs/MapUtils")
-local config = require("__RampantFixed__/config")
+local config = require("__sing-rampant2__/config")
 
 local function getBaseStats(base)
 	if not base then

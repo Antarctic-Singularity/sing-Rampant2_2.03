@@ -62,11 +62,6 @@ function zoneManager.updateZonePheromoneTotal(map, chunk)
 end
 
 function zoneManager.scanZonePhase1(map, zone, surface)
-    if zone.playerPheromoneTotal <= 0 then
-        zone.scanPhase = 0
-        return
-    end
-
     local x0 = zone.tileX
     local y0 = zone.tileY
     local x1 = x0 + zoneManager.ZONE_TILE_SIZE
@@ -172,7 +167,7 @@ function zoneManager.processZoneScan(map, surface)
         end
 
         local zone = map.zonesByIndex[map.zoneIterator]
-        if zone.scanPhase == 0 and zone.playerPheromoneTotal > 0 then
+        if zone.scanPhase == 0 then
             zone.scanPhase = 1
         end
 

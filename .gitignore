@@ -1,0 +1,27 @@
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Factorio
+script.log
+factorio.log
+
+# Python (modding tools)
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+
+# Build
+dist/
+build/
+*.zip
+
+# Node
+node_modules/

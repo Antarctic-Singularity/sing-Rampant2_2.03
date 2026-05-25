@@ -182,10 +182,16 @@ function debugCommands.printZoneStats(map)
     local totalPowerMW = 0
 
     for _, zone in ipairs(map.zonesByIndex) do
-        zone.scanPhase = zone.scanPhase or 0
-        zone.totalRate = zone.totalRate or 0
-        zone.powerGen = zone.powerGen or 0
-        scanPhases[zone.scanPhase + 1] = scanPhases[zone.scanPhase + 1] + 1
+        if not zone then goto continue end
+        zone.scanPhase = type(zone.scanPhase) == "number" and zone.scanPhase or 0
+        zone.totalRate = type(zone.totalRate) == "number" and zone.totalRate or 0
+        zone.powerGen = type(zone.powerGen) == "number" and zone.powerGen or 0
+
+        local phase = zone.scanPhase
+        if phase >= 0 and phase <= 3 then
+            scanPhases[phase + 1] = scanPhases[phase + 1] + 1
+        end
+
         if zone.totalRate > 0 then
             activeZones = activeZones + 1
             topZones[#topZones + 1] = zone
@@ -193,6 +199,7 @@ function debugCommands.printZoneStats(map)
         if zone.powerGen and zone.powerGen > 0 then
             totalPowerMW = totalPowerMW + zone.powerGen
         end
+        ::continue::
     end
 
     table.insert(lines, "Scan phase distribution: Phase0=" .. scanPhases[1] .. " Phase1=" .. scanPhases[2] .. " Phase2=" .. scanPhases[3] .. " Phase3=" .. scanPhases[4])

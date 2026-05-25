@@ -250,6 +250,20 @@ function zoneManager.processZoneScan(map, surface)
         map.zoneIterator = 0
     end
 
+    -- Dynamic zone expansion based on player position (every scan tick)
+    local r = zoneManager.ZONE_INIT_RADIUS
+    for _, player in pairs(game.players) do
+        if player.valid and player.surface.index == surface.index then
+            local cx = mFloor(player.position.x / zoneManager.ZONE_TILE_SIZE)
+            local cy = mFloor(player.position.y / zoneManager.ZONE_TILE_SIZE)
+            for dx = -r, r do
+                for dy = -r, r do
+                    zoneManager.getZoneByGridCoords(map, cx + dx, cy + dy)
+                end
+            end
+        end
+    end
+
     -- Initialize missing cache fields for old zones (save migration)
     for _, zone in ipairs(map.zonesByIndex) do
         if not zone.nextRescanTick then

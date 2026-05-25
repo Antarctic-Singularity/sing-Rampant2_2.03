@@ -149,7 +149,7 @@ function debugCommands.printTargets(map)
 end
 
 function debugCommands.clearAllOverlays(player)
-    for _, obj in ipairs(rendering.get_all_objects(player.index)) do
+    for _, obj in ipairs(rendering.get_all_objects(player.name)) do
         rendering.destroy(obj)
     end
     game.print("All overlays cleared")

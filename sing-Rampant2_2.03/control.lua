@@ -40,6 +40,9 @@ local undergroundAttack = require("libs/UndergroundAttack")
 local unitGroupUtils = require("libs/UnitGroupUtils")
 local unitUtils = require("libs/UnitUtils")
 local upgrade = require("Upgrade")
+local zoneManager = require("libs/ZoneManager")
+local targetRanker = require("libs/TargetRanker")
+local debugCommands = require("libs/DebugCommands")
 
 local hasSpaceAgeMod = script.active_mods["space-age"]
 
@@ -215,6 +218,16 @@ end
 local function onLoad()
     universe = storage.universe
     hookEvents()
+
+	if universe and universe.maps then
+		for surfaceIndex, map in pairs(universe.maps) do
+			if not map.zones then
+				zoneManager.initZones(map)
+				map.priorityTargets = {}
+				map.globalTotalRate = 0
+			end
+		end
+	end
 end
 
 local function onChunkGenerated(event)
@@ -320,6 +333,10 @@ local function prepMap(surface)
     map.surface = surface
     map.universe = universe
 	map.suspended = false
+
+	zoneManager.initZones(map)
+	map.priorityTargets = {}
+	map.globalTotalRate = 0
 
     map.vengenceQueue = {}
     map.points = 0
@@ -1468,6 +1485,7 @@ script.on_event(defines.events.on_tick,
                             recycleBases(universe, tick)
                         end
                         cleanUpMapTables(map, tick)
+						zoneManager.processZoneScan(map, map.surface)
                     elseif (pick == 1) then
 						processPlayers(gameRef.connected_players, universe, tick)
                     elseif (pick == 2) then
@@ -1500,7 +1518,15 @@ script.on_event(defines.events.on_tick,
                     processSquads(universe)
 		end
 )
-script.on_nth_tick(30000, 
+script.on_nth_tick(10000,
+	function()
+		if universe and universe.activeMap then
+			targetRanker.processRanking(universe.activeMap, 3)
+		end
+	end
+)
+
+script.on_nth_tick(30000,
 	function()
 		if universe then
 			local evo = game.forces.enemy.get_evolution_factor()
@@ -1511,8 +1537,8 @@ script.on_nth_tick(30000,
 			baseUtils.setRandomBaseToMutate(universe)
 			if hasSpaceAgeMod then
 				demolisherUtils.vulcanusEvolution()	-- if you change the call frequency, then change the function
-			end	
-		end	
+			end
+		end
 	end
 )
 
@@ -1896,7 +1922,7 @@ local function setSurfaces(event)
 	GUI_Elements.setSurfaces(event)
 end
 
-commands.add_command('rampantSetSurfaces', "", setSurfaces)
+commands.add_command('r2-surfaces', "Configure which surfaces Rampant processes", setSurfaces)
 
 local function rampantSetAIState(event)
     local surfaceIndex = game.players[event.player_index].surface.index
@@ -1905,7 +1931,7 @@ local function rampantSetAIState(event)
 		local surfaceName = game.players[event.player_index].surface.name
 		game.print(surfaceName .. " is excluded from processing ")
 		return
-	end	
+	end
 
     game.print(map.surface.name .. " is in " .. constants.stateEnglish[map.state])
 
@@ -1917,33 +1943,33 @@ local function rampantSetAIState(event)
             return
         end
 
-        if (target ~= constants.AI_STATE_PEACEFUL 
-			and target ~= constants.AI_STATE_AGGRESSIVE 
-			and target ~= constants.AI_STATE_RAIDING 
-			and target ~= constants.AI_STATE_MIGRATING 
-			and target ~= constants.AI_STATE_SIEGE 
+        if (target ~= constants.AI_STATE_PEACEFUL
+			and target ~= constants.AI_STATE_AGGRESSIVE
+			and target ~= constants.AI_STATE_RAIDING
+			and target ~= constants.AI_STATE_MIGRATING
+			and target ~= constants.AI_STATE_SIEGE
 			and target ~= constants.AI_STATE_ONSLAUGHT
 			and target ~= constants.AI_STATE_GROWING
 			) then
             game.print(target .. " is not a valid state")
             return
         else
-            
+
 			map.state = target
 			if map.state == constants.AI_STATE_GROWING then
 				aiPlanning.updateBasesToGrow(map, game.tick, false)
-			end	
+			end
             game.print(map.surface.name .. " is now in " .. constants.stateEnglish[map.state])
         end
     end
 end
 
-commands.add_command('rampantSetAIState', "", rampantSetAIState)
+commands.add_command('r2-aistate', "Set AI aggression state (1=peaceful, 2=aggressive, 4=raiding, 5=migrating, 6=siege, 7=onslaught, 8=growing)", rampantSetAIState)
 
 local function rampantForceMutations(event)
     local i = 0
     local basesTotal = 0
-	
+
 	for id, base in pairs(universe.bases) do
 		basesTotal = basesTotal + 1
 		if base and base.thisIsRampantEnemy then
@@ -1952,10 +1978,10 @@ local function rampantForceMutations(event)
 		end
 	end
 	game.print("Bases forces to mutate: ".. i.."/"..basesTotal)
-	
+
 end
 
-commands.add_command('rampantForceMutations', "", rampantForceMutations)
+commands.add_command('r2-mutate', "Force all enemy bases to mutate", rampantForceMutations)
 
 local function rampantCreateCompressedBiter(event)
 	local newEntity = game.players[event.player_index].surface.create_entity({
@@ -1971,6 +1997,57 @@ end
 --commands.add_command('rampantCreateCompressedBiter', "", rampantCreateCompressedBiter)
 
 local function rampantCreateDebugMenu(event)
-	GUI_Elements.rampantCreateDebugMenu(event)		
+	GUI_Elements.rampantCreateDebugMenu(event)
 end
-commands.add_command('rampantDebugMenu', "", rampantCreateDebugMenu)
+commands.add_command('r2-menu', "Open debug menu", rampantCreateDebugMenu)
+
+-- Zone & Target Debug Commands
+local function r2ZonesCmd(event)
+	local player = game.players[event.player_index]
+	local map = universe.maps[player.surface.index]
+	if not map then
+		game.print("No map on this surface")
+		return
+	end
+	debugCommands.printZoneStats(map)
+end
+commands.add_command('r2-zones', "Print zone statistics", r2ZonesCmd)
+
+local function r2ZoneDrawCmd(event)
+	local player = game.players[event.player_index]
+	local map = universe.maps[player.surface.index]
+	if not map then
+		game.print("No map on this surface")
+		return
+	end
+	debugCommands.drawZoneOverlay(player, map)
+end
+commands.add_command('r2-zones-draw', "Draw zone grid overlay", r2ZoneDrawCmd)
+
+local function r2TargetsCmd(event)
+	local player = game.players[event.player_index]
+	local map = universe.maps[player.surface.index]
+	if not map then
+		game.print("No map on this surface")
+		return
+	end
+	debugCommands.printTargets(map)
+end
+commands.add_command('r2-targets', "Print priority targets", r2TargetsCmd)
+
+local function r2TargetDrawCmd(event)
+	local player = game.players[event.player_index]
+	local map = universe.maps[player.surface.index]
+	if not map then
+		game.print("No map on this surface")
+		return
+	end
+	debugCommands.drawTargetOverlay(player, map)
+end
+commands.add_command('r2-targets-draw', "Draw target circles on map", r2TargetDrawCmd)
+
+local function r2ClearCmd(event)
+	local player = game.players[event.player_index]
+	debugCommands.clearAllOverlays(player)
+end
+commands.add_command('r2-clear', "Clear all debug overlays", r2ClearCmd)

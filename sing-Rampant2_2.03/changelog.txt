@@ -4,13 +4,41 @@
 ===================================================================================================
 
 ---------------------------------------------------------------------------------------------------
+Version: 2.03.0 (Development)
+Date: 2026.05.25
+  Features:
+    - Phase 1: Zone Intelligence System — Map divided into 320×320 tile zones for strategic analysis
+    - Zone Scanner: Scans assemblers, furnaces, and mining drills to calculate production rate per zone
+    - Target Ranker: Ranks zones by relative production share to identify priority targets (top 3)
+    - Debug System: New concise debug commands with map overlays for zone and target visualization
+  Infrastructure:
+    - Created libs/ZoneManager.lua — Zone grid, production scanning (3 phases per zone)
+    - Created libs/TargetRanker.lua — Relative ranking algorithm and priority target list
+    - Created libs/DebugCommands.lua — Map overlays and console statistics printing
+    - Zone scanning integrated into main tick loop (1 zone phase per tick, one-per-tick iterator pattern)
+    - Target ranking runs automatically every ~2.7 minutes via on_nth_tick
+    - Full save/load compatibility for existing games
+  Debug Commands (renamed for clarity):
+    - r2-zones: Print zone statistics
+    - r2-zones-draw: Draw zone grid overlay on map
+    - r2-targets: Print priority target details
+    - r2-targets-draw: Draw target circles and rankings
+    - r2-clear: Clear all debug overlays
+    - r2-surfaces: Configure surface processing
+    - r2-aistate: Set AI aggression state
+    - r2-mutate: Force all bases to mutate
+    - r2-menu: Open debug GUI menu
+  Balance:
+    - Foundation for Phase 2-10: Priority squads, outposts, fortresses, demolisher biters
+
+---------------------------------------------------------------------------------------------------
 Version: 2.02.05 (Development)
 Date: 2026.05.25
   Management:
     - Project takeover by Antarctic_Singularity
     - Renamed mod to sing-rampant2 for clarity
     - Restructured repository with project root documentation
-    - All future development and maintenance by Antarctic_Singularity
+    - Fork future development and maintenance by Antarctic_Singularity
 
 ---------------------------------------------------------------------------------------------------
 Version: 2.02.04

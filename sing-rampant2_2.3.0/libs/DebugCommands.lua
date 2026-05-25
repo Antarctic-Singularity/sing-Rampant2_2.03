@@ -23,39 +23,48 @@ function debugCommands.drawZoneOverlay(player, map)
         local y0 = zone.tileY
         local x1 = x0 + zoneManager.ZONE_TILE_SIZE
         local y1 = y0 + zoneManager.ZONE_TILE_SIZE
+        local cx = (x0 + x1) / 2
+        local cy = (y0 + y1) / 2
 
-        local color = {0.5, 0.5, 0.5, 0.3}
+        local color = {r=0.4, g=0.4, b=0.4, a=0.8}
         if zone.totalRate > 0 then
-            color = {0.2, 0.8, 0.2, 0.3}
+            local intensity = math.min(1.0, zone.relativeShare * 5)
+            color = {r=0.1, g=0.4+intensity*0.5, b=0.1, a=0.9}
         end
 
         rendering.draw_rectangle({
             color = color,
-            filled = true,
+            filled = false,
+            width = 4,
             left_top = {x0, y0},
             right_bottom = {x1, y1},
             surface = surface,
             time_to_live = 600,
-            draw_on_ground = true,
-            visible = true
+            render_mode = "chart"
         })
 
+        local label
         if zone.totalRate > 0 then
             local share = zone.relativeShare * 100
-            local text = string.format("%.1f%% %.0f/s", share, zone.totalRate)
-            rendering.draw_text({
-                text = text,
-                surface = surface,
-                target = {x = zone.tileX + zoneManager.ZONE_TILE_SIZE / 2, y = zone.tileY + zoneManager.ZONE_TILE_SIZE / 2},
-                color = {1, 1, 1},
-                scale = 1.5,
-                alignment = "center",
-                time_to_live = 600
-            })
+            label = string.format("%.0f%%\n%.1f/s", share, zone.totalRate)
+        else
+            label = "0"
         end
+
+        rendering.draw_text({
+            text = label,
+            surface = surface,
+            target = {x = cx, y = cy},
+            color = zone.totalRate > 0 and {r=0.2, g=1, b=0.2, a=1} or {r=0.5, g=0.5, b=0.5, a=0.8},
+            scale = 3,
+            alignment = "center",
+            time_to_live = 600,
+            render_mode = "chart",
+            scale_with_zoom = false
+        })
     end
 
-    game.print("Zone overlay drawn. Total zones: " .. #map.zonesByIndex)
+    game.print("Zone overlay drawn on map. Total zones: " .. #map.zonesByIndex)
 end
 
 function debugCommands.drawTargetOverlay(player, map)
@@ -71,29 +80,33 @@ function debugCommands.drawTargetOverlay(player, map)
     end
 
     for i, target in ipairs(map.priorityTargets) do
-        local color = {1, 0, 0, 0.8}
-        local size = 20 + i * 5
+        local alpha = 1.0 - (i - 1) * 0.2
+        local color = {r=1, g=0.1*(i-1), b=0, a=alpha}
+        local size = 80 - i * 10
 
         rendering.draw_circle({
             color = color,
             radius = size,
             filled = false,
+            width = 4,
             surface = surface,
-            target = target,
+            target = {x = target.centerX, y = target.centerY},
             time_to_live = 600,
-            visible = true
+            render_mode = "chart"
         })
 
         local share = target.relativeShare * 100
-        local text = "#" .. i .. " (" .. string.format("%.1f%%", share) .. ")"
+        local text = "#" .. i .. " " .. string.format("%.0f%%", share)
         rendering.draw_text({
             text = text,
             surface = surface,
-            target = {x = target.centerX, y = target.centerY - size - 5},
+            target = {x = target.centerX, y = target.centerY},
             color = color,
-            scale = 2,
+            scale = 4,
             alignment = "center",
-            time_to_live = 600
+            time_to_live = 600,
+            render_mode = "chart",
+            scale_with_zoom = false
         })
     end
 

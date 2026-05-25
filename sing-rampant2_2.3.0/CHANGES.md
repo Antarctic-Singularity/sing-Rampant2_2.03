@@ -276,12 +276,16 @@ Strikes enabled: [yes/no]
 
 ## Bug Fixes
 
-**Evolution Factor Property (Fixed)**
-- **Issue:** `game.forces.enemy.evolution_factor` doesn't exist in Factorio 2.0
-- **Error:** "LuaForce doesn't contain key evolution_factor"
-- **Fix:** Changed to correct property `game.forces.enemy.evolution`
+**Evolution Factor API Access (Fixed)**
+- **Issue:** Incorrect API usage for accessing evolution factor in Factorio 2.0
+- **Error:** "LuaForce doesn't contain key evolution_factor" / "LuaForce doesn't contain key evolution"
+- **Root Cause:** Evolution factor is not a direct property; requires method call with surface parameter
+- **Fix:** Changed to `game.forces.enemy.get_evolution_factor(surface)`
 - **Location:** StrikeManager.lua line 36
-- **Commit:** c078b9d "Fix evolution factor property name in StrikeManager"
+- **Reference:** Matches AIPlanning.lua line 92 (existing codebase pattern)
+- **Commits:** 
+  - c078b9d "Fix evolution factor property name in StrikeManager"
+  - 9bb1f3a "Fix evolution factor access to use correct Factorio 2.0 API"
 
 ---
 

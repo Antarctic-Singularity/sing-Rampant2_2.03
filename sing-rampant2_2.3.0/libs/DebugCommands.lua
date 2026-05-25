@@ -3,12 +3,6 @@ if debugCommandsG then
 end
 local debugCommands = {}
 
-local function writeOutputFile(filename, lines)
-    local content = table.concat(lines, "\n")
-    game.write_file(filename, content)
-    return content
-end
-
 local zoneManager = require("libs/ZoneManager")
 local constants = require("libs/Constants")
 
@@ -146,7 +140,6 @@ function debugCommands.printZoneStats(map)
         table.insert(lines, "WARNING: All zones still in Phase 0. Scanning may not be running.")
     end
 
-    writeOutputFile("rampant2-zones.txt", lines)
     for _, line in ipairs(lines) do
         game.print(line)
     end
@@ -168,14 +161,13 @@ function debugCommands.printTargets(map)
         ))
     end
 
-    writeOutputFile("rampant2-targets.txt", lines)
     for _, line in ipairs(lines) do
         game.print(line)
     end
 end
 
 function debugCommands.clearAllOverlays(player)
-    for _, obj in ipairs(rendering.get_all_objects(player.name)) do
+    for _, obj in ipairs(rendering.get_all_objects(player)) do
         rendering.destroy(obj)
     end
     game.print("All overlays cleared")
@@ -211,7 +203,6 @@ function debugCommands.findEnemyStructures(player)
         table.insert(lines, "  First drill force: " .. drills[1].force.name)
     end
 
-    writeOutputFile("rampant2-structures.txt", lines)
     for _, line in ipairs(lines) do
         game.print(line)
     end

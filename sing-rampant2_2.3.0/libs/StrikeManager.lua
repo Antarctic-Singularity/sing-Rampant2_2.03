@@ -33,7 +33,7 @@ function strikeManager.processStrikes(map, surface)
     local debugPrint = settings.global["rampantFixed--debugStrikeTargeting"].value
 
     -- Check if strikes are enabled (at 20% evolution or higher)
-    local evolution = game.forces.enemy.evolution_factor
+    local evolution = game.forces.enemy.evolution
     local strikeEnabled = evolution >= strikeManager.STRIKE_ENABLED_EVOLUTION
     if strikeEnabled and not map.strikeState.enabled then
         map.strikeState.enabled = true

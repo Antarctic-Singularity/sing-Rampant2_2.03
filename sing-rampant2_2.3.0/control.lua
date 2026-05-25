@@ -2051,3 +2051,9 @@ local function r2ClearCmd(event)
 	debugCommands.clearAllOverlays(player)
 end
 commands.add_command('r2-clear', "Clear all debug overlays", r2ClearCmd)
+
+local function r2StructuresCmd(event)
+	local player = game.players[event.player_index]
+	debugCommands.findEnemyStructures(player)
+end
+commands.add_command('r2-structures', "Find enemy production structures", r2StructuresCmd)

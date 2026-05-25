@@ -46,7 +46,7 @@ function debugCommands.drawZoneOverlay(player, map)
             rendering.draw_text({
                 text = text,
                 surface = surface,
-                position = {zone.tileX + zoneManager.ZONE_TILE_SIZE / 2, zone.tileY + zoneManager.ZONE_TILE_SIZE / 2},
+                target = {x = zone.tileX + zoneManager.ZONE_TILE_SIZE / 2, y = zone.tileY + zoneManager.ZONE_TILE_SIZE / 2},
                 color = {1, 1, 1},
                 scale = 1.5,
                 alignment = "center",
@@ -89,7 +89,7 @@ function debugCommands.drawTargetOverlay(player, map)
         rendering.draw_text({
             text = text,
             surface = surface,
-            position = {target.centerX, target.centerY - size - 5},
+            target = {x = target.centerX, y = target.centerY - size - 5},
             color = color,
             scale = 2,
             alignment = "center",

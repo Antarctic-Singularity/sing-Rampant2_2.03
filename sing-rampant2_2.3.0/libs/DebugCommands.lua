@@ -18,17 +18,15 @@ function debugCommands.drawZoneOverlay(player, map)
         return
     end
 
-    local renderingObjects = {}
-
     for _, zone in ipairs(map.zonesByIndex) do
         local x0 = zone.tileX
         local y0 = zone.tileY
         local x1 = x0 + zoneManager.ZONE_TILE_SIZE
         local y1 = y0 + zoneManager.ZONE_TILE_SIZE
 
-        local color = {r = 0.5, g = 0.5, b = 0.5, a = 0.3}
-        if zone.playerPheromoneTotal > 0 then
-            color = {r = 0.2, g = 0.8, b = 0.2, a = 0.3}
+        local color = {0.5, 0.5, 0.5, 0.3}
+        if zone.totalRate > 0 then
+            color = {0.2, 0.8, 0.2, 0.3}
         end
 
         rendering.draw_rectangle({
@@ -37,20 +35,22 @@ function debugCommands.drawZoneOverlay(player, map)
             left_top = {x0, y0},
             right_bottom = {x1, y1},
             surface = surface,
-            players = {player.index}
+            time_to_live = 600,
+            draw_on_ground = true,
+            visible = true
         })
 
         if zone.totalRate > 0 then
             local share = zone.relativeShare * 100
-            local text = string.format("%.1f%%\n%.0f/s", share, zone.totalRate)
+            local text = string.format("%.1f%% %.0f/s", share, zone.totalRate)
             rendering.draw_text({
                 text = text,
                 surface = surface,
-                target = {zone.tileX + zoneManager.ZONE_TILE_SIZE / 2, zone.tileY + zoneManager.ZONE_TILE_SIZE / 2},
-                color = {r = 1, g = 1, b = 1},
+                position = {zone.tileX + zoneManager.ZONE_TILE_SIZE / 2, zone.tileY + zoneManager.ZONE_TILE_SIZE / 2},
+                color = {1, 1, 1},
                 scale = 1.5,
                 alignment = "center",
-                players = {player.index}
+                time_to_live = 600
             })
         end
     end
@@ -71,7 +71,7 @@ function debugCommands.drawTargetOverlay(player, map)
     end
 
     for i, target in ipairs(map.priorityTargets) do
-        local color = {r = 1, g = 0, b = 0, a = 0.8}
+        local color = {1, 0, 0, 0.8}
         local size = 20 + i * 5
 
         rendering.draw_circle({
@@ -79,8 +79,9 @@ function debugCommands.drawTargetOverlay(player, map)
             radius = size,
             filled = false,
             surface = surface,
-            target = {x = target.centerX, y = target.centerY},
-            players = {player.index}
+            target = target,
+            time_to_live = 600,
+            visible = true
         })
 
         local share = target.relativeShare * 100
@@ -88,11 +89,11 @@ function debugCommands.drawTargetOverlay(player, map)
         rendering.draw_text({
             text = text,
             surface = surface,
-            target = {target.centerX, target.centerY - size - 5},
+            position = {target.centerX, target.centerY - size - 5},
             color = color,
             scale = 2,
             alignment = "center",
-            players = {player.index}
+            time_to_live = 600
         })
     end
 

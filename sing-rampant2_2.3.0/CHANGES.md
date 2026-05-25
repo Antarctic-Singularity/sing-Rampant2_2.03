@@ -274,6 +274,17 @@ Strikes enabled: [yes/no]
 
 ---
 
+## Bug Fixes
+
+**Evolution Factor Property (Fixed)**
+- **Issue:** `game.forces.enemy.evolution_factor` doesn't exist in Factorio 2.0
+- **Error:** "LuaForce doesn't contain key evolution_factor"
+- **Fix:** Changed to correct property `game.forces.enemy.evolution`
+- **Location:** StrikeManager.lua line 36
+- **Commit:** c078b9d "Fix evolution factor property name in StrikeManager"
+
+---
+
 ## Code Quality Notes
 
 **Defensive Programming:**

@@ -111,17 +111,21 @@ function debugCommands.printZoneStats(map)
 
     local activeZones = 0
     local topZones = {}
+    local scanPhases = {0, 0, 0, 0}
 
     for _, zone in ipairs(map.zonesByIndex) do
+        scanPhases[zone.scanPhase + 1] = scanPhases[zone.scanPhase + 1] + 1
         if zone.totalRate > 0 then
             activeZones = activeZones + 1
             topZones[#topZones + 1] = zone
         end
     end
 
+    game.print("Scan phase distribution: Phase0=" .. scanPhases[1] .. " Phase1=" .. scanPhases[2] .. " Phase2=" .. scanPhases[3] .. " Phase3=" .. scanPhases[4])
+    game.print("Active zones: " .. activeZones)
+
     table.sort(topZones, function(a, b) return a.totalRate > b.totalRate end)
 
-    game.print("Active zones: " .. activeZones)
     for i = 1, math.min(5, #topZones) do
         local zone = topZones[i]
         local share = zone.relativeShare * 100
@@ -129,6 +133,10 @@ function debugCommands.printZoneStats(map)
             "  Zone[%d,%d]: %.1f items/s (%.1f%%)",
             zone.zx, zone.zy, zone.totalRate, share
         ))
+    end
+
+    if activeZones == 0 and scanPhases[1] == #map.zonesByIndex then
+        game.print("WARNING: All zones still in Phase 0. Scanning may not be running.")
     end
 end
 

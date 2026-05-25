@@ -4,7 +4,7 @@
 ===================================================================================================
 
 ---------------------------------------------------------------------------------------------------
-Version: 2.03.0 (Development)
+Version: 2.3.0 (Development)
 Date: 2026.05.25
   Features:
     - Phase 1: Zone Intelligence System — Map divided into 320×320 tile zones for strategic analysis

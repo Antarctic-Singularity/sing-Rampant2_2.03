@@ -1,6 +1,6 @@
 # Rampant 2: Advanced AI & Enemy Overhaul
 
-**Version:** 2.03.0 (Development)  
+**Version:** 2.3.0 (Development)  
 **Factorio Version:** 2.0+  
 **Maintained by:** Antarctic_Singularity
 
@@ -15,7 +15,7 @@ Rampant 2 is a comprehensive overhaul of enemy AI in Factorio 2.0, building on t
 - **Learning AI** — Biters learn and adapt to player defense structures
 - **Multi-Planet Support** — Works across Nauvis, Gleba, and Vulcanus
 
-## Current Features (v2.03.0)
+## Current Features (v2.3.0)
 
 ### Phase 1: Zone Intelligence System
 The mod now analyzes the game world through a strategic zone-based system:

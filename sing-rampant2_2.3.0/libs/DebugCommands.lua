@@ -165,27 +165,25 @@ end
 
 function debugCommands.findEnemyStructures(player)
     local surface = player.surface
+    local typeCount = {}
+
+    local allEnemy = surface.find_entities_filtered({force = "enemy"})
+    for _, entity in ipairs(allEnemy) do
+        local t = entity.type
+        typeCount[t] = (typeCount[t] or 0) + 1
+    end
+
+    game.print("=== ALL ENEMY ENTITIES ===")
+    game.print("Total enemy entities: " .. #allEnemy)
+    for typ, count in pairs(typeCount) do
+        game.print("  " .. typ .. ": " .. count)
+    end
 
     local assemblers = surface.find_entities_filtered({type = "assembling-machine", force = "enemy"})
     local furnaces = surface.find_entities_filtered({type = "furnace", force = "enemy"})
     local drills = surface.find_entities_filtered({type = "mining-drill", force = "enemy"})
 
-    game.print("Enemy structures on surface: Assemblers=" .. #assemblers .. " Furnaces=" .. #furnaces .. " Drills=" .. #drills)
-
-    if #assemblers > 0 then
-        local a = assemblers[1]
-        local recipe = a.get_recipe()
-        game.print("  First assembler at [" .. a.position.x .. "," .. a.position.y .. "] recipe=" .. (recipe and recipe.name or "none"))
-    end
-    if #furnaces > 0 then
-        local f = furnaces[1]
-        local recipe = f.get_recipe()
-        game.print("  First furnace at [" .. f.position.x .. "," .. f.position.y .. "] recipe=" .. (recipe and recipe.name or "none"))
-    end
-    if #drills > 0 then
-        local d = drills[1]
-        game.print("  First drill at [" .. d.position.x .. "," .. d.position.y .. "] mining_target=" .. (d.mining_target and d.mining_target.name or "none"))
-    end
+    game.print("Production buildings: Assemblers=" .. #assemblers .. " Furnaces=" .. #furnaces .. " Drills=" .. #drills)
 end
 
 debugCommandsG = debugCommands

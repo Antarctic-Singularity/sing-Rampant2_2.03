@@ -37,12 +37,10 @@ function strikeManager.processStrikes(map, surface)
         return  -- Not enough evolution for strikes
     end
 
-    -- Print first-time enable message
+    -- Print first-time enable message (always, not just in debug)
     if not map.strikeState.enabled then
         map.strikeState.enabled = true
-        if debugPrint then
-            game.print("Strike targeting enabled at " .. math.floor(evolution * 100) .. "% evolution")
-        end
+        game.print("Strike targeting enabled at " .. math.floor(evolution * 100) .. "% evolution")
     end
 
     -- Check if cooldown is still active

@@ -616,6 +616,15 @@ data:extend({
         },
 
         {
+            type = "bool-setting",
+            name = "rampantFixed--debugStrikeTargeting",
+            setting_type = "runtime-global",
+            default_value = false,
+            order = "m[total]-d5[ai]zz",
+            per_user = false
+        },
+
+        {
             type = "double-setting",
             name = "rampantFixed--settlementsProbability",
             setting_type = "runtime-global",

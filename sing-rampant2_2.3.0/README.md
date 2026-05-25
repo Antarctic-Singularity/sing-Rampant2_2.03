@@ -21,19 +21,32 @@ Rampant 2 is a comprehensive overhaul of enemy AI in Factorio 2.0, building on t
 The mod now analyzes the game world through a strategic zone-based system:
 
 - **Zone Scanning** — Map divided into 320×320 tile zones for production analysis
-- **Production Analysis** — Automatically scans enemy assemblers, furnaces, and mining operations
+- **Production Analysis** — Automatically scans assemblers, furnaces, mining drills, and power generation
+- **Zone Categorization** — Zones classified as raw-resources, oil, products, power, or outposts
+- **Product Tier Weighting** — Advanced items (blue science, processing units) prioritized over basic items
 - **Priority Targeting** — Identifies the top 3 highest-production zones as priority targets
 - **Real-time Updates** — Continuous scanning with ranking refresh every ~2.7 minutes
+- **Strike System** — Coordinated AI attacks on high-value production zones (enabled at 20% evolution)
+  - Random category selection from available zone types
+  - Multi-squad deployment (3 squads per strike)
+  - 15-minute cooldown between strikes
+  - Alert notifications to players with GPS links
 
 ### Debug System
 Comprehensive debug tools for development and testing:
 
 ```
 r2-zones        Print zone production statistics
-r2-zones-draw   Draw zone grid overlay on map
+r2-zones-draw   Draw zone grid overlay on map (with category, production, cache status)
 r2-targets      Print priority target details
 r2-targets-draw Draw priority target circles with rankings
 r2-clear        Clear all debug overlays
+r2-status       Print zone scanning and strike system status
+r2-scan-here    Scan entities at player location and show zone state
+r2-scan-power   Scan total power generation on surface
+r2-rescan       Force immediate zone rescan (queued over 4 passes)
+r2-super-rescan DANGER: Rescan ALL zones instantly (game will freeze)
+r2-structures   Find enemy production structures
 r2-menu         Open debug GUI
 r2-surfaces     Configure which surfaces to process
 r2-aistate      Set AI aggression state (1-8)
@@ -97,13 +110,16 @@ See `settings.lua` for all available startup and runtime settings.
 ### File Structure
 ```
 libs/
-  ZoneManager.lua       Zone grid, production scanning
-  TargetRanker.lua      Ranking algorithm, priority targets
+  ZoneManager.lua       Zone grid, 4-phase scanning (assemblers, furnaces, drills, power)
+  StrikeTargeting.lua   Zone categorization, target ranking, product tier weighting
+  StrikeManager.lua     Coordinated strike deployment with cooldowns and alerts
   DebugCommands.lua     Overlays and console output
   Constants.lua         Zone configuration constants
   [existing libs...]
   
 control.lua            Main event handlers, tick loop integration
+settings.lua           Mod settings (including debug strike info option)
+locale/en/locale.cfg   Localization strings
 info.json              Mod metadata and dependencies
 changelog.txt          Version history
 ```

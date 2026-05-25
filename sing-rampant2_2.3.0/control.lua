@@ -43,6 +43,7 @@ local upgrade = require("Upgrade")
 local zoneManager = require("libs/ZoneManager")
 local targetRanker = require("libs/TargetRanker")
 local debugCommands = require("libs/DebugCommands")
+local strikeManager = require("libs/StrikeManager")
 
 local hasSpaceAgeMod = script.active_mods["space-age"]
 
@@ -223,6 +224,7 @@ local function onLoad()
 		for surfaceIndex, map in pairs(universe.maps) do
 			if not map.zones then
 				zoneManager.initZones(map)
+				strikeManager.initStrikes(map)
 				map.priorityTargets = {}
 				map.globalTotalRate = 0
 			end
@@ -335,6 +337,7 @@ local function prepMap(surface)
 	map.suspended = false
 
 	zoneManager.initZones(map)
+	strikeManager.initStrikes(map)
 	map.priorityTargets = {}
 	map.globalTotalRate = 0
 
@@ -1485,7 +1488,6 @@ script.on_event(defines.events.on_tick,
                             recycleBases(universe, tick)
                         end
                         cleanUpMapTables(map, tick)
-						zoneManager.processZoneScan(map, map.surface)
                     elseif (pick == 1) then
 						processPlayers(gameRef.connected_players, universe, tick)
                     elseif (pick == 2) then
@@ -1518,6 +1520,16 @@ script.on_event(defines.events.on_tick,
                     processSquads(universe)
 		end
 )
+
+script.on_nth_tick(120,
+	function()
+		if universe and universe.activeMap then
+			zoneManager.processZoneScan(universe.activeMap, universe.activeMap.surface)
+			strikeManager.processStrikes(universe.activeMap, universe.activeMap.surface)
+		end
+	end
+)
+
 script.on_nth_tick(10000,
 	function()
 		if universe and universe.activeMap then
@@ -2057,3 +2069,62 @@ local function r2StructuresCmd(event)
 	debugCommands.findEnemyStructures(player)
 end
 commands.add_command('r2-structures', "Find enemy production structures", r2StructuresCmd)
+
+local function r2RescanCmd(event)
+	local map = universe.activeMap
+	if not map then
+		game.print("No active map")
+		return
+	end
+	zoneManager.forceRescan(map)
+end
+commands.add_command('r2-rescan', "Force immediate zone rescan", r2RescanCmd)
+
+local function r2SuperRescanCmd(event)
+	local map = universe.activeMap
+	if not map then
+		game.print("No active map")
+		return
+	end
+	zoneManager.superForceRescan(map, map.surface)
+end
+commands.add_command('r2-super-rescan', "DANGER: Rescan ALL zones instantly (game will freeze)", r2SuperRescanCmd)
+
+local function r2ScanHereCmd(event)
+	local player = game.players[event.player_index]
+	local map = universe.activeMap
+	debugCommands.scanHere(player, map)
+end
+commands.add_command('r2-scan-here', "Scan entities at player position and show zone state", r2ScanHereCmd)
+
+local function r2ScanPowerCmd(event)
+	local player = game.players[event.player_index]
+	local map = universe.activeMap
+	debugCommands.scanPower(player, map)
+end
+commands.add_command('r2-scan-power', "Scan total power generation on surface", r2ScanPowerCmd)
+
+local function r2StatusCmd(event)
+	local map = universe.activeMap
+	if not map then
+		game.print("No active map")
+		return
+	end
+	debugCommands.printScanStatus(map)
+end
+commands.add_command('r2-status', "Print zone scanning and strike system status", r2StatusCmd)
+
+-- Mark zones dirty when player entities are built/destroyed (triggers immediate rescan)
+script.on_event(defines.events.on_built_entity, function(event)
+	if not event.entity or not event.entity.force then return end
+	if event.entity.force.name == "player" and universe.activeMap then
+		zoneManager.markZoneDirty(universe.activeMap, event.entity.position)
+	end
+end)
+
+script.on_event(defines.events.on_entity_died, function(event)
+	if not event.entity or not event.entity.force then return end
+	if event.entity.force.name == "player" and universe.activeMap then
+		zoneManager.markZoneDirty(universe.activeMap, event.entity.position)
+	end
+end)

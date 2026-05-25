@@ -8,19 +8,37 @@ Version: 2.3.0 (Development)
 Date: 2026.05.25
   Features:
     - Phase 1: Zone Intelligence System — Map divided into 320×320 tile zones for strategic analysis
-    - Zone Scanner: Scans assemblers, furnaces, and mining drills to calculate production rate per zone
-    - Target Ranker: Ranks zones by relative production share to identify priority targets (top 3)
-    - Debug System: New concise debug commands with map overlays for zone and target visualization
+    - Zone Scanner: Scans assemblers, furnaces, mining drills, and power generation (4 phases per zone)
+    - Zone Categorization: Raw-resources, oil, products, power, and outpost detection
+      - Product tier weighting: Advanced items (blue science, processing units) prioritized
+      - Military outpost detection: 8+ turrets/walls + 6+ adjacent empty zones
+      - Power override: 10+ power buildings auto-categorized as power zones
+    - Strike System: Coordinated AI attacks on high-value production zones
+      - Strikes enabled at 20% evolution threshold
+      - Random category rolling from available zone types
+      - Multi-squad deployment: 3 squads per strike to target location
+      - 15-minute cooldown between strikes
+      - Alert notifications to players with GPS coordinates
+      - Debug printing available via rampantFixed--debugStrikeTargeting setting
+    - Target Ranker: Ranks zones by relative production share to identify priority targets
+    - Debug System: Comprehensive debug tools for development and testing
   Infrastructure:
-    - Created libs/ZoneManager.lua — Zone grid, production scanning (3 phases per zone)
-    - Created libs/TargetRanker.lua — Relative ranking algorithm and priority target list
-    - Created libs/DebugCommands.lua — Map overlays and console statistics printing
-    - Zone scanning integrated into main tick loop (1 zone phase per tick, one-per-tick iterator pattern)
-    - Target ranking runs automatically every ~2.7 minutes via on_nth_tick
-    - Full save/load compatibility for existing games
-  Debug Commands (renamed for clarity):
-    - r2-zones: Print zone statistics
-    - r2-zones-draw: Draw zone grid overlay on map
+    - Created libs/ZoneManager.lua — Zone grid, 4-phase production scanning
+    - Created libs/StrikeTargeting.lua — Zone categorization and target ranking by tier
+    - Created libs/StrikeManager.lua — Strike deployment, cooldowns, and alert notifications
+    - Created libs/DebugCommands.lua — Map overlays and console statistics
+    - Zone scanning integrated into main tick loop (1 zone phase per tick, iterator pattern)
+    - Strike processing runs every 120 ticks alongside zone scanning
+    - Full save/load compatibility with defensive field initialization
+  Debug Commands:
+    - r2-zones: Print zone statistics with phase distribution and production
+    - r2-zones-draw: Draw zone grid overlay on map (color-coded by cache/dirty/active status)
+    - r2-status: Print zone scanning progress and strike cooldown status
+    - r2-scan-here: Scan entities at player location with zone state details
+    - r2-scan-power: Audit power generation detection
+    - r2-rescan: Force queued zone rescan (4 passes)
+    - r2-super-rescan: Force instant rescan of all zones (WARNING: causes freeze)
+    - r2-structures: Find player production structures on map
     - r2-targets: Print priority target details
     - r2-targets-draw: Draw target circles and rankings
     - r2-clear: Clear all debug overlays
@@ -28,8 +46,10 @@ Date: 2026.05.25
     - r2-aistate: Set AI aggression state
     - r2-mutate: Force all bases to mutate
     - r2-menu: Open debug GUI menu
+  Settings:
+    - rampantFixed--debugStrikeTargeting: Print strike targeting info to chat (default: off)
   Balance:
-    - Foundation for Phase 2-10: Priority squads, outposts, fortresses, demolisher biters
+    - Foundation for Phase 2-10: Outposts, fortresses, advanced squad tactics
 
 ---------------------------------------------------------------------------------------------------
 Version: 2.02.05 (Development)

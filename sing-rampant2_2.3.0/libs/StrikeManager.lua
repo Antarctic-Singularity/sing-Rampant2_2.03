@@ -12,7 +12,6 @@ local unitGroupUtils = require("libs/UnitGroupUtils")
 strikeManager.STRIKE_COOLDOWN_DURATION = 15 * 60 * 60  -- 15 minutes in ticks (60 ticks/sec)
 strikeManager.STRIKE_ENABLED_EVOLUTION = 0.20  -- 20% evolution
 strikeManager.SQUADS_PER_STRIKE = 3
-strikeManager.STRIKE_ICON = "rampant-strike-icon"  -- virtual icon name for alert
 
 function strikeManager.initStrikes(map)
     if not map then return end
@@ -136,10 +135,7 @@ function strikeManager.processStrikes(map, surface)
                     if player_settings["rampantFixed--showSquadAlert"].value then
                         player.add_custom_alert(
                             alertEntity,
-                            {
-                                type = "virtual",
-                                name = "rampant-strike-icon"
-                            },
+                            nil,
                             messageText,
                             true
                         )

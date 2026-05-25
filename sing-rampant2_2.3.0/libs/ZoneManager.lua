@@ -70,7 +70,7 @@ function zoneManager.scanZonePhase1(map, zone, surface)
     local assemblers = surface.find_entities_filtered({
         area = {{x0, y0}, {x1, y1}},
         type = "assembling-machine",
-        force = "enemy"
+        force = "player"
     })
 
     for _, entity in ipairs(assemblers) do
@@ -99,7 +99,7 @@ function zoneManager.scanZonePhase2(map, zone, surface)
     local furnaces = surface.find_entities_filtered({
         area = {{x0, y0}, {x1, y1}},
         type = "furnace",
-        force = "enemy"
+        force = "player"
     })
 
     for _, entity in ipairs(furnaces) do
@@ -128,7 +128,7 @@ function zoneManager.scanZonePhase3(map, zone, surface)
     local drills = surface.find_entities_filtered({
         area = {{x0, y0}, {x1, y1}},
         type = "mining-drill",
-        force = "enemy"
+        force = "player"
     })
 
     for _, entity in ipairs(drills) do

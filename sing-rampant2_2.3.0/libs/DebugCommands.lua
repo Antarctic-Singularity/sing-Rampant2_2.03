@@ -166,12 +166,12 @@ end
 function debugCommands.findEnemyStructures(player)
     local surface = player.surface
 
+    local allPlayer = surface.find_entities_filtered({force = "player"})
     local allEnemy = surface.find_entities_filtered({force = "enemy"})
-    local allNeutral = surface.find_entities_filtered({force = "neutral"})
 
     game.print("=== ENTITY COUNTS ===")
+    game.print("Player force total: " .. #allPlayer)
     game.print("Enemy force total: " .. #allEnemy)
-    game.print("Neutral force total: " .. #allNeutral)
 
     local assemblers = surface.find_entities_filtered({type = "assembling-machine"})
     local furnaces = surface.find_entities_filtered({type = "furnace"})

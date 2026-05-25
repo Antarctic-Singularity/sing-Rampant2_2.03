@@ -135,7 +135,10 @@ function strikeManager.processStrikes(map, surface)
                     if player_settings["rampantFixed--showSquadAlert"].value then
                         player.add_custom_alert(
                             alertEntity,
-                            nil,
+                            {
+                                type = "entity",
+                                name = "biter-spawner"
+                            },
                             messageText,
                             true
                         )

@@ -33,19 +33,19 @@ function strikeManager.processStrikes(map, surface)
 
     -- Check if strikes are enabled (at 20% evolution or higher)
     local evolution = game.forces.enemy.get_evolution_factor(surface)
-    local strikeEnabled = evolution >= strikeManager.STRIKE_ENABLED_EVOLUTION
-    if strikeEnabled and not map.strikeState.enabled then
+    if evolution < strikeManager.STRIKE_ENABLED_EVOLUTION then
+        return  -- Not enough evolution for strikes
+    end
+
+    -- Print first-time enable message
+    if not map.strikeState.enabled then
         map.strikeState.enabled = true
         if debugPrint then
             game.print("Strike targeting enabled at " .. math.floor(evolution * 100) .. "% evolution")
         end
     end
 
-    -- Check if strike is enabled and cooldown has expired
-    if not strikeEnabled then
-        return
-    end
-
+    -- Check if cooldown is still active
     if tick < map.strikeState.cooldownEndTick then
         return  -- Still on cooldown
     end

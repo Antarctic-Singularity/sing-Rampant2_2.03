@@ -155,7 +155,7 @@ function strikeTargeting.countAdjacentEmptyZones(map, zone)
 end
 
 function strikeTargeting.dominatesAdjacentZones(map, zone)
-    -- Check if zone has at least 2x the military buildings of EACH adjacent zone
+    -- Check if zone has at least 20% more military buildings than EACH adjacent zone
     -- Returns true only if zone dominates all adjacent zones individually
     if not map or not map.zones or not zone then
         return false
@@ -175,8 +175,8 @@ function strikeTargeting.dominatesAdjacentZones(map, zone)
                 local neighborZone = map.zones[zx + dx] and map.zones[zx + dx][zy + dy]
                 if neighborZone then
                     local neighborBuildings = neighborZone.militaryBuildingCount or 0
-                    -- Must have more than 2x each neighbor's buildings
-                    if zoneBuildings <= neighborBuildings * 2 then
+                    -- Must have more than 20% more than each neighbor's buildings
+                    if zoneBuildings <= neighborBuildings * 1.2 then
                         return false  -- Doesn't dominate this neighbor
                     end
                 end

@@ -287,6 +287,14 @@ Strikes enabled: [yes/no]
   - c078b9d "Fix evolution factor property name in StrikeManager"
   - 9bb1f3a "Fix evolution factor access to use correct Factorio 2.0 API"
 
+**Alert Virtual Icon Name (Fixed)**
+- **Issue:** Used non-existent virtual icon name "rampant-strike-icon" in alerts
+- **Error:** "Unknown virtual-signal name: rampant-strike-icon"
+- **Fix:** Changed to use `nil` for icon parameter (uses entity's default icon)
+- **Removed:** Unused `STRIKE_ICON` constant
+- **Location:** StrikeManager.lua lines 15, 137
+- **Commit:** 1ae9eb3 "Fix alert icon - use entity icon instead of non-existent virtual signal"
+
 ---
 
 ## Code Quality Notes

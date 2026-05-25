@@ -6,5 +6,5 @@
     "author" : "Antarctic_Singularity",
     "homepage" : "",
     "description" : "Advanced AI and enemy overhaul for Factorio 2.0. Originally based on Rampant 1.1.1 by Veden, significantly expanded and adapted for Space Age by Dimm2101, now maintained by Antarctic_Singularity.\n\nFeatures improved enemy tactics with potential fields/pheromones, unit swarming, tactical retreats, breaching behavior, and faction mutations. Units can attack from afar and learn your defenses. Works across all planets: Nauvis, Gleba, and Vulcanus.",
-    "dependencies" : ["base >= 2.0.0", "!Rampant", "!combat-mechanics-overhaul", "!intelligent-enemy", "?alien-module", "?Arachnids", "?ArmouredBiters", "?Explosive_biters", "?Krastorio2", "?RampantArsenalFork", "?SchallAlienLoot", "?space-age"]
+    "dependencies" : ["base >= 2.0.0", "!Rampant", "!RampantFixed", "!combat-mechanics-overhaul", "!intelligent-enemy", "?alien-module", "?Arachnids", "?ArmouredBiters", "?Explosive_biters", "?Krastorio2", "?RampantArsenalFork", "?SchallAlienLoot", "?space-age"]
 }

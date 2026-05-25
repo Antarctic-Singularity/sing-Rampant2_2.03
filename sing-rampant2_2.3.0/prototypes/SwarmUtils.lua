@@ -15,8 +15,8 @@ local unitUtils = require("utils/UnitUtils")
 local fireUtils = require("utils/FireUtils")
 local spawnUtils = require("utils/SpawnUtils")
 
-local constants = require("__RampantFixed__/libs/Constants")
-local mathUtils = require("__RampantFixed__/libs/MathUtils")
+local constants = require("__sing-rampant2__/libs/Constants")
+local mathUtils = require("__sing-rampant2__/libs/MathUtils")
 
 -- imported functions
 

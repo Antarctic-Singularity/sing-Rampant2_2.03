@@ -160,26 +160,41 @@ function zoneManager.compileZone(zone)
 end
 
 function zoneManager.processZoneScan(map, surface)
-    if not map.zonesByIndex or #map.zonesByIndex == 0 then
+    if not map.zonesByIndex then
         return
     end
 
-    map.zoneIterator = map.zoneIterator + 1
-    if map.zoneIterator > #map.zonesByIndex then
-        map.zoneIterator = 1
-    end
+    -- Scan existing zones
+    if #map.zonesByIndex > 0 then
+        map.zoneIterator = map.zoneIterator + 1
+        if map.zoneIterator > #map.zonesByIndex then
+            map.zoneIterator = 1
+        end
 
-    local zone = map.zonesByIndex[map.zoneIterator]
-    if zone.scanPhase == 0 and zone.playerPheromoneTotal > 0 then
-        zone.scanPhase = 1
-    end
+        local zone = map.zonesByIndex[map.zoneIterator]
+        if zone.scanPhase == 0 and zone.playerPheromoneTotal > 0 then
+            zone.scanPhase = 1
+        end
 
-    if zone.scanPhase == 1 then
-        zoneManager.scanZonePhase1(map, zone, surface)
-    elseif zone.scanPhase == 2 then
-        zoneManager.scanZonePhase2(map, zone, surface)
-    elseif zone.scanPhase == 3 then
-        zoneManager.scanZonePhase3(map, zone, surface)
+        if zone.scanPhase == 1 then
+            zoneManager.scanZonePhase1(map, zone, surface)
+        elseif zone.scanPhase == 2 then
+            zoneManager.scanZonePhase2(map, zone, surface)
+        elseif zone.scanPhase == 3 then
+            zoneManager.scanZonePhase3(map, zone, surface)
+        end
+    else
+        -- Create initial zones around enemy bases
+        if map.chunkToBase then
+            for chunk, base in pairs(map.chunkToBase) do
+                if chunk and chunk.x and chunk.y then
+                    zoneManager.getZoneByGridCoords(map,
+                        mFloor(chunk.x / zoneManager.ZONE_TILE_SIZE),
+                        mFloor(chunk.y / zoneManager.ZONE_TILE_SIZE)
+                    )
+                end
+            end
+        end
     end
 end
 

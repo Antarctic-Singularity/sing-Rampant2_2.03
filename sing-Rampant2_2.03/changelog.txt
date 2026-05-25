@@ -4,6 +4,15 @@
 ===================================================================================================
 
 ---------------------------------------------------------------------------------------------------
+Version: 2.02.05 (Development)
+Date: 2026.05.25
+  Management:
+    - Project takeover by Antarctic_Singularity
+    - Renamed mod to sing-rampant2 for clarity
+    - Restructured repository with project root documentation
+    - All future development and maintenance by Antarctic_Singularity
+
+---------------------------------------------------------------------------------------------------
 Version: 2.02.04
 Date: 2025.09.18
   Balancing:

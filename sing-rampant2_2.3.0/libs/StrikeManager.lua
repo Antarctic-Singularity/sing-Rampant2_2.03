@@ -194,10 +194,9 @@ function strikeManager.processStrikes(map, surface, universe)
         end
     end
 
-    -- Max acceptable distance from nearest player: 3 zones end-to-end
-    -- (zone = 64 tiles, so cap = 192 tiles). Beyond this, strikes would take
-    -- forever to walk to the target.
-    local MAX_NEST_DIST_FROM_PLAYER = zoneManager.ZONE_TILE_SIZE * 3
+    -- Max acceptable distance from nearest player: 250 tiles.
+    -- Beyond this, strikes would take forever to walk to the target.
+    local MAX_NEST_DIST_FROM_PLAYER = 250
     local MAX_NEST_DIST_SQ = MAX_NEST_DIST_FROM_PLAYER * MAX_NEST_DIST_FROM_PLAYER
 
     -- Helper: compute squared distance from a chunk to the nearest player

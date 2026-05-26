@@ -1525,7 +1525,7 @@ script.on_nth_tick(120,
 	function()
 		if universe and universe.activeMap then
 			zoneManager.processZoneScan(universe.activeMap, universe.activeMap.surface)
-			strikeManager.processStrikes(universe.activeMap, universe.activeMap.surface)
+			strikeManager.processStrikes(universe.activeMap, universe.activeMap.surface, storage.universe)
 		end
 	end
 )

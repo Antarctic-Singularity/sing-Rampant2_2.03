@@ -139,7 +139,7 @@ function strikeTargeting.countAdjacentEmptyZones(map, zone)
             if dx ~= 0 or dy ~= 0 then  -- skip self
                 local neighborZone = map.zones[zx + dx] and map.zones[zx + dx][zy + dy]
                 if neighborZone then
-                    local neighborCat = strikeTargeting.getZoneCategory(neighborZone)
+                    local neighborCat = strikeTargeting.getZoneCategory(neighborZone, map, true)
                     if not neighborCat then
                         emptyCount = emptyCount + 1
                     end
@@ -187,21 +187,18 @@ function strikeTargeting.dominatesAdjacentZones(map, zone)
     return true  -- Dominates all adjacent zones
 end
 
-function strikeTargeting.getZoneCategory(zone, map)
+function strikeTargeting.getZoneCategory(zone, map, skipOutpostCheck)
     -- Returns the PRIMARY category this zone belongs to
     if not zone then
         return nil
     end
 
-    -- If zone has 8+ military buildings AND dominates adjacent zones AND 6+ empty adjacent zones, it's an outpost
-    if zone.militaryBuildingCount and zone.militaryBuildingCount >= 8 and map then
-        -- Must have at least 2x the building count of each adjacent zone individually
-        if strikeTargeting.dominatesAdjacentZones(map, zone) then
-            -- Also must have 6+ adjacent empty zones for isolation confirmation
-            local emptyAdjacent = strikeTargeting.countAdjacentEmptyZones(map, zone)
-            if emptyAdjacent >= 6 then
-                return "outpost"
-            end
+    -- If zone has 8+ military buildings AND 6+ empty adjacent zones, it's an outpost
+    -- Skip this check if we're being called recursively to avoid infinite loops
+    if map and not skipOutpostCheck and zone.militaryBuildingCount and zone.militaryBuildingCount >= 8 then
+        local emptyAdjacent = strikeTargeting.countAdjacentEmptyZones(map, zone)
+        if emptyAdjacent >= 6 then
+            return "outpost"
         end
     end
 
@@ -295,7 +292,7 @@ function strikeTargeting.selectStrikeTargetInCategory(map, category)
 
     for _, zone in ipairs(map.zonesByIndex) do
         if zone.totalRate > 0 then
-            local zoneCat = strikeTargeting.getZoneCategory(zone)
+            local zoneCat = strikeTargeting.getZoneCategory(zone, map)
 
             if zoneCat == category then
                 local score = 0
@@ -326,7 +323,7 @@ function strikeTargeting.hasZonesInCategory(map, category)
     end
 
     for _, zone in ipairs(map.zonesByIndex) do
-        if zone.totalRate > 0 and strikeTargeting.getZoneCategory(zone) == category then
+        if zone.totalRate > 0 and strikeTargeting.getZoneCategory(zone, map) == category then
             return true
         end
     end

@@ -4,6 +4,7 @@ end
 local zoneManager = {}
 
 local constants = require("libs/Constants")
+local strikeTargeting = require("libs/StrikeTargeting")
 
 local CHUNK_SIZE = constants.CHUNK_SIZE
 local mFloor = math.floor
@@ -53,6 +54,7 @@ function zoneManager.getZoneByGridCoords(map, zx, zy)
             powerBuildingCount = 0,  -- number of power buildings
             militaryBuildingCount = 0,  -- number of turrets/walls/military buildings
             -- cache fields
+            category = nil,  -- categorized by compileZone after scanning
             lastScanTick = 0,
             nextRescanTick = 0,
             isDirty = true,  -- mark new zones as needing initial scan
@@ -209,10 +211,10 @@ function zoneManager.scanZonePhase4(map, zone, surface)
     zone.powerGen = totalPower / 1e6  -- convert to MW
     zone.powerBuildingCount = buildingCount
 
-    zoneManager.compileZone(zone, game.tick)
+    zoneManager.compileZone(zone, game.tick, map)
 end
 
-function zoneManager.compileZone(zone, tick)
+function zoneManager.compileZone(zone, tick, map)
     local totalRate = 0
     for itemName, rate in pairs(zone.products) do
         totalRate = totalRate + rate
@@ -224,6 +226,11 @@ function zoneManager.compileZone(zone, tick)
     zone.isDirty = false
     -- Next rescan in 30 seconds (1800 ticks at 60 ticks/sec)
     zone.nextRescanTick = (tick or 0) + 1800
+
+    -- Cache the category on the zone for quick access during strikes
+    if map then
+        zone.category = strikeTargeting.getZoneCategory(zone, map)
+    end
 end
 
 local function createZonesAroundPlayers(map, surface)

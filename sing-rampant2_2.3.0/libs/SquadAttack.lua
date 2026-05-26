@@ -41,6 +41,8 @@ local AI_STATE_SIEGE = constants.AI_STATE_SIEGE
 
 local PLAYER_PHEROMONE_MULTIPLER = constants.PLAYER_PHEROMONE_MULTIPLER
 
+local CHUNK_SIZE = constants.CHUNK_SIZE
+
 local DEFINES_DISTRACTION_NONE = defines.distraction.none
 local DEFINES_DISTRACTION_BY_ENEMY = defines.distraction.by_enemy
 local DEFINES_DISTRACTION_BY_ANYTHING = defines.distraction.by_anything
@@ -94,6 +96,48 @@ local mCeil = math.ceil
 ------------------squadCompression---------------------------------------
 
 ---------------------------------------------------------------------------
+
+local function customTargetMove(map, squad, tick)
+    local group = squad.group
+    if not group or not group.valid then
+        return
+    end
+    if #group.members == 0 then
+        -- empty group can't be commanded; let it die naturally
+        return
+    end
+
+    local tx = squad.customTarget.x
+    local ty = squad.customTarget.y
+    local pos = group.position
+
+    -- close enough to target? release custom target and let normal attack take over
+    local dist = math.sqrt((pos.x-tx)^2 + (pos.y-ty)^2)
+    if dist < CHUNK_SIZE * 2 then
+        squad.customTarget = nil
+        -- fall through to normal attackMove on next dispatch
+        return
+    end
+
+    -- March group directly to the target, attacking anything in range along the way
+    local cmd = {
+        type = defines.command.attack_area,
+        destination = {x = tx, y = ty},
+        radius = CHUNK_SIZE,
+        distraction = DEFINES_DISTRACTION_BY_ENEMY
+    }
+    group.set_command(cmd)
+
+    -- set_command can invalidate the group if it auto-disbands (e.g. unreachable target)
+    if group.valid then
+        group.start_moving()
+    end
+
+    -- Throttle re-dispatch so we don't spam commands every tick
+    squad.nextCommandTick = tick + 60
+    squad.checkTick = tick + 18000  -- prevent stuck-squad cleanup
+    squad.onTheWay = true
+end
 
 local function settleHere(map, group, squad, dontDistract)
 	if not squad then
@@ -674,9 +718,45 @@ function squadAttack.squadDispatch(map, squad)
 		if (not squad.detected) and (#group.members > 0) then
 			 squad.detected = showAlert(group.surface, group.members[1], "squadDetected-warning-rampant", {"", {"description.rampantFixed--squadDetectedWarning", #group.members}})
 		end
+        -- Strict gathering check:
+        --   - Always wait until formingMinUntil (minimum gather time)
+        --   - Then proceed when 80% of requested units have joined,
+        --     OR formingUntil hard-cap is reached
+        --   - Don't issue any commands during gathering - let units walk naturally
+        if squad.formingUntil then
+            local tick = game.tick
+            local memberCount = #squad.group.members
+            local target = squad.targetMemberCount or 1
+            local threshold = math.ceil(target * 0.8)
+
+            local minWaitDone = (not squad.formingMinUntil) or (tick >= squad.formingMinUntil)
+            local hardCapReached = tick >= squad.formingUntil
+            local enoughGathered = memberCount >= threshold
+
+            if hardCapReached or (minWaitDone and enoughGathered) then
+                -- Gathering complete - clear forming state and let SQUAD_RAIDING dispatch
+                local reason = hardCapReached and "timeout" or "gathered"
+                game.print("[Strike] Squad attacking with " .. memberCount .. "/" .. target .. " units (" .. reason .. ")")
+                squad.formingUntil = nil
+                squad.formingMinUntil = nil
+                squad.targetMemberCount = nil
+                squad.status = SQUAD_RAIDING
+            else
+                -- Still gathering - don't issue any commands, just wait
+                squad.nextCommandTick = tick + 30
+                squad.checkTick = tick + 18000  -- prevent stuck-squad cleanup
+                return
+            end
+        end
+
         local status = squad.status
+
         if (status == SQUAD_RAIDING) then
-            attackMove(map, squad)
+            if squad.customTarget then
+                customTargetMove(map, squad, game.tick)
+            else
+                attackMove(map, squad)
+            end
         elseif (status == SQUAD_SETTLING) then
             settleMove(map, squad)
         elseif (status == SQUAD_RETREATING) then

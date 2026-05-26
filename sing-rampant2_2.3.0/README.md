@@ -149,4 +149,4 @@ GNU General Public License v3.0 - See LICENSE.md for details
 - **Original Rampant** — Veden
 - **Space Age Port & Expansion** — Dimm2101
 - **Current Maintenance** — Antarctic_Singularity
-- **Phase 1 Implementation** — Claude Code + Nathan Ramos (2026)
+- **Phase 1 Implementation** — Antarctic Singularity (2026)

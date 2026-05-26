@@ -2114,6 +2114,26 @@ local function r2StatusCmd(event)
 end
 commands.add_command('r2-status', "Print zone scanning and strike system status", r2StatusCmd)
 
+local function r2TriggerStrikeCmd(event)
+	local map = universe.activeMap
+	if not map then
+		game.print("No active map")
+		return
+	end
+	if not map.strikeState then
+		game.print("[Strike] State not initialized")
+		return
+	end
+	-- Clear current cooldown so processStrikes will fire this tick
+	map.strikeState.cooldownEndTick = 0
+	strikeManager.processStrikes(map, map.surface, universe)
+	-- Override the post-strike cooldown to 10 seconds (600 ticks) so repeated
+	-- manual triggers can fire quickly during testing
+	map.strikeState.cooldownEndTick = game.tick + 600
+	game.print("[Strike] Triggered; next strike available in 10 seconds")
+end
+commands.add_command('r2-trigger-strike', "Force-trigger a strike now and set the next cooldown to 10 seconds", r2TriggerStrikeCmd)
+
 -- Mark zones dirty when player entities are built/destroyed (triggers immediate rescan)
 script.on_event(defines.events.on_built_entity, function(event)
 	if not event.entity or not event.entity.force then return end

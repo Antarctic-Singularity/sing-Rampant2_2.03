@@ -185,15 +185,40 @@ function strikeManager.processStrikes(map, surface, universe)
         return
     end
 
-    -- Collect nests and sort by distance to target
+    -- Gather player positions on this surface so we can prefer nests
+    -- that are FAR from any player (deeper enemy territory)
+    local playerPositions = {}
+    for _, player in pairs(game.players) do
+        if player.valid and player.surface.index == surface.index then
+            playerPositions[#playerPositions + 1] = player.position
+        end
+    end
+
+    -- Helper: compute squared distance from a chunk to the nearest player
+    local function distSqToNearestPlayer(chunk)
+        if #playerPositions == 0 then
+            return 0  -- no players, neutral score
+        end
+        local minSq = math.huge
+        for _, pp in ipairs(playerPositions) do
+            local dx = chunk.x - pp.x
+            local dy = chunk.y - pp.y
+            local d = dx*dx + dy*dy
+            if d < minSq then minSq = d end
+        end
+        return minSq
+    end
+
+    -- Collect nests with both metrics: distance from player, distance to target
     local nestCandidates = {}
     for nestChunk, _ in pairs(nestPool) do
         if nestChunk and nestChunk ~= -1 then
-            local dx = nestChunk.x - targetX
-            local dy = nestChunk.y - targetY
+            local dxt = nestChunk.x - targetX
+            local dyt = nestChunk.y - targetY
             nestCandidates[#nestCandidates + 1] = {
                 chunk = nestChunk,
-                distSq = dx*dx + dy*dy
+                distSqToTarget = dxt*dxt + dyt*dyt,
+                distSqToPlayer = distSqToNearestPlayer(nestChunk)
             }
         end
     end
@@ -203,8 +228,19 @@ function strikeManager.processStrikes(map, surface, universe)
         return
     end
 
-    table.sort(nestCandidates, function(a, b) return a.distSq < b.distSq end)
-    game.print("[Strike] Found " .. #nestCandidates .. " nest chunks, closest at distance " .. math.floor(math.sqrt(nestCandidates[1].distSq)))
+    -- Sort primarily by distance from player (descending - furthest first)
+    -- so strikes come from deep enemy territory rather than the front line.
+    -- Tie-breaker: closer to target (descending distance from player, ascending to target).
+    table.sort(nestCandidates, function(a, b)
+        if a.distSqToPlayer ~= b.distSqToPlayer then
+            return a.distSqToPlayer > b.distSqToPlayer  -- furthest from player first
+        end
+        return a.distSqToTarget < b.distSqToTarget  -- then closest to target
+    end)
+
+    local furthestDist = math.floor(math.sqrt(nestCandidates[1].distSqToPlayer))
+    local closestNestToTarget = math.floor(math.sqrt(nestCandidates[1].distSqToTarget))
+    game.print("[Strike] Found " .. #nestCandidates .. " nest chunks - top pick is " .. furthestDist .. " tiles from player, " .. closestNestToTarget .. " from target")
 
     -- Deploy squads from the closest nests
     local nestIndex = 1
@@ -262,7 +298,7 @@ function strikeManager.processStrikes(map, surface, universe)
                             -- OR max 15 seconds (900 ticks), whichever comes first
                             -- Also enforce minimum 5 second wait so squads don't leave instantly
                             squad.targetMemberCount = foundUnits  -- expected member count
-                            squad.formingMinUntil = tick + 300  -- always wait at least 5 sec
+                            squad.formingMinUntil = tick + 600  -- always wait at least 10 sec
                             squad.formingUntil = tick + 900     -- hard cap 15 sec
 
                             universe.groupNumberToSquad[squad.groupNumber] = squad

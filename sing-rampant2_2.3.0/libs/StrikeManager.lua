@@ -185,83 +185,116 @@ function strikeManager.processStrikes(map, surface, universe)
         return
     end
 
-    -- Gather player positions on this surface so we can prefer nests
-    -- that are FAR from any player (deeper enemy territory) but still within reach
-    local playerPositions = {}
-    for _, player in pairs(game.players) do
-        if player.valid and player.surface.index == surface.index then
-            playerPositions[#playerPositions + 1] = player.position
-        end
-    end
+    -- NOTE: The player-distance cap / "furthest from player" preference logic
+    -- below is DISABLED for now. It was filtering out too many viable nests and
+    -- biasing strikes toward nests right at the perimeter edge, which didn't
+    -- play well with the strict gathering window. Reverted to simple
+    -- "closest nest to target" selection so strikes deploy reliably.
+    -- To re-enable, uncomment the block below and remove the simple-sort block
+    -- that follows it.
+    --
+    -- -- Gather player positions on this surface so we can prefer nests
+    -- -- that are FAR from any player (deeper enemy territory) but still within reach
+    -- local playerPositions = {}
+    -- for _, player in pairs(game.players) do
+    --     if player.valid and player.surface.index == surface.index then
+    --         playerPositions[#playerPositions + 1] = player.position
+    --     end
+    -- end
+    --
+    -- -- Max acceptable distance from nearest player: 250 tiles.
+    -- -- Beyond this, strikes would take forever to walk to the target.
+    -- local MAX_NEST_DIST_FROM_PLAYER = 250
+    -- local MAX_NEST_DIST_SQ = MAX_NEST_DIST_FROM_PLAYER * MAX_NEST_DIST_FROM_PLAYER
+    --
+    -- -- Helper: compute squared distance from a chunk to the nearest player
+    -- local function distSqToNearestPlayer(chunk)
+    --     if #playerPositions == 0 then
+    --         return 0  -- no players, neutral score
+    --     end
+    --     local minSq = math.huge
+    --     for _, pp in ipairs(playerPositions) do
+    --         local dx = chunk.x - pp.x
+    --         local dy = chunk.y - pp.y
+    --         local d = dx*dx + dy*dy
+    --         if d < minSq then minSq = d end
+    --     end
+    --     return minSq
+    -- end
+    --
+    -- -- Collect candidate nests within the player-distance cap. Track rejected
+    -- -- nests as a fallback in case no nest fits inside the cap.
+    -- local nestCandidates = {}
+    -- local fallbackCandidates = {}
+    -- for nestChunk, _ in pairs(nestPool) do
+    --     if nestChunk and nestChunk ~= -1 then
+    --         local dxt = nestChunk.x - targetX
+    --         local dyt = nestChunk.y - targetY
+    --         local distSqPlayer = distSqToNearestPlayer(nestChunk)
+    --         local entry = {
+    --             chunk = nestChunk,
+    --             distSqToTarget = dxt*dxt + dyt*dyt,
+    --             distSqToPlayer = distSqPlayer
+    --         }
+    --         if #playerPositions == 0 or distSqPlayer <= MAX_NEST_DIST_SQ then
+    --             nestCandidates[#nestCandidates + 1] = entry
+    --         else
+    --             fallbackCandidates[#fallbackCandidates + 1] = entry
+    --         end
+    --     end
+    -- end
+    --
+    -- -- If no nests fit inside the player-distance cap, fall back to the full
+    -- -- pool so the strike still happens (just from further out than ideal).
+    -- local usingFallback = false
+    -- if #nestCandidates == 0 then
+    --     if #fallbackCandidates == 0 then
+    --         game.print("[Strike] FAILED - No valid nest chunks")
+    --         return
+    --     end
+    --     nestCandidates = fallbackCandidates
+    --     usingFallback = true
+    -- end
+    --
+    -- -- Sort primarily by distance from player (descending - furthest first within cap)
+    -- -- so strikes come from the deepest enemy territory we can still reach from.
+    -- -- Tie-breaker: closer to target.
+    -- table.sort(nestCandidates, function(a, b)
+    --     if a.distSqToPlayer ~= b.distSqToPlayer then
+    --         return a.distSqToPlayer > b.distSqToPlayer
+    --     end
+    --     return a.distSqToTarget < b.distSqToTarget
+    -- end)
+    --
+    -- local furthestDist = math.floor(math.sqrt(nestCandidates[1].distSqToPlayer))
+    -- local closestNestToTarget = math.floor(math.sqrt(nestCandidates[1].distSqToTarget))
+    -- local fallbackTag = usingFallback and " [fallback - no nests within " .. MAX_NEST_DIST_FROM_PLAYER .. " tiles]" or ""
+    -- game.print("[Strike] Found " .. #nestCandidates .. " nest chunks (cap " .. MAX_NEST_DIST_FROM_PLAYER .. " from player) - top pick is " .. furthestDist .. " tiles from player, " .. closestNestToTarget .. " from target" .. fallbackTag)
 
-    -- Max acceptable distance from nearest player: 250 tiles.
-    -- Beyond this, strikes would take forever to walk to the target.
-    local MAX_NEST_DIST_FROM_PLAYER = 250
-    local MAX_NEST_DIST_SQ = MAX_NEST_DIST_FROM_PLAYER * MAX_NEST_DIST_FROM_PLAYER
-
-    -- Helper: compute squared distance from a chunk to the nearest player
-    local function distSqToNearestPlayer(chunk)
-        if #playerPositions == 0 then
-            return 0  -- no players, neutral score
-        end
-        local minSq = math.huge
-        for _, pp in ipairs(playerPositions) do
-            local dx = chunk.x - pp.x
-            local dy = chunk.y - pp.y
-            local d = dx*dx + dy*dy
-            if d < minSq then minSq = d end
-        end
-        return minSq
-    end
-
-    -- Collect candidate nests within the player-distance cap. Track rejected
-    -- nests as a fallback in case no nest fits inside the cap.
+    -- Simple selection: sort nests by distance to target, closest first
     local nestCandidates = {}
-    local fallbackCandidates = {}
     for nestChunk, _ in pairs(nestPool) do
         if nestChunk and nestChunk ~= -1 then
             local dxt = nestChunk.x - targetX
             local dyt = nestChunk.y - targetY
-            local distSqPlayer = distSqToNearestPlayer(nestChunk)
-            local entry = {
+            nestCandidates[#nestCandidates + 1] = {
                 chunk = nestChunk,
-                distSqToTarget = dxt*dxt + dyt*dyt,
-                distSqToPlayer = distSqPlayer
+                distSqToTarget = dxt*dxt + dyt*dyt
             }
-            if #playerPositions == 0 or distSqPlayer <= MAX_NEST_DIST_SQ then
-                nestCandidates[#nestCandidates + 1] = entry
-            else
-                fallbackCandidates[#fallbackCandidates + 1] = entry
-            end
         end
     end
 
-    -- If no nests fit inside the player-distance cap, fall back to the full
-    -- pool so the strike still happens (just from further out than ideal).
-    local usingFallback = false
     if #nestCandidates == 0 then
-        if #fallbackCandidates == 0 then
-            game.print("[Strike] FAILED - No valid nest chunks")
-            return
-        end
-        nestCandidates = fallbackCandidates
-        usingFallback = true
+        game.print("[Strike] FAILED - No valid nest chunks")
+        return
     end
 
-    -- Sort primarily by distance from player (descending - furthest first within cap)
-    -- so strikes come from the deepest enemy territory we can still reach from.
-    -- Tie-breaker: closer to target.
     table.sort(nestCandidates, function(a, b)
-        if a.distSqToPlayer ~= b.distSqToPlayer then
-            return a.distSqToPlayer > b.distSqToPlayer
-        end
         return a.distSqToTarget < b.distSqToTarget
     end)
 
-    local furthestDist = math.floor(math.sqrt(nestCandidates[1].distSqToPlayer))
     local closestNestToTarget = math.floor(math.sqrt(nestCandidates[1].distSqToTarget))
-    local fallbackTag = usingFallback and " [fallback - no nests within " .. MAX_NEST_DIST_FROM_PLAYER .. " tiles]" or ""
-    game.print("[Strike] Found " .. #nestCandidates .. " nest chunks (cap " .. MAX_NEST_DIST_FROM_PLAYER .. " from player) - top pick is " .. furthestDist .. " tiles from player, " .. closestNestToTarget .. " from target" .. fallbackTag)
+    game.print("[Strike] Found " .. #nestCandidates .. " nest chunks, closest is " .. closestNestToTarget .. " tiles from target")
 
     -- Deploy squads from the closest nests
     local nestIndex = 1

@@ -2124,15 +2124,15 @@ local function r2TriggerStrikeCmd(event)
 		game.print("[Strike] State not initialized")
 		return
 	end
-	-- Clear current cooldown so processStrikes will fire this tick
+	-- Force-bypass the cooldown for this single trigger.
+	-- processStrikes will internally reset cooldownEndTick to tick + STRIKE_COOLDOWN_DURATION
+	-- after firing, which prevents the periodic on_nth_tick handler from auto-firing
+	-- a second strike. To trigger again, just run /r2-trigger-strike again.
 	map.strikeState.cooldownEndTick = 0
 	strikeManager.processStrikes(map, map.surface, universe)
-	-- Override the post-strike cooldown to 10 seconds (600 ticks) so repeated
-	-- manual triggers can fire quickly during testing
-	map.strikeState.cooldownEndTick = game.tick + 600
-	game.print("[Strike] Triggered; next strike available in 10 seconds")
+	game.print("[Strike] Manually triggered. Run /r2-trigger-strike again for another.")
 end
-commands.add_command('r2-trigger-strike', "Force-trigger a strike now and set the next cooldown to 10 seconds", r2TriggerStrikeCmd)
+commands.add_command('r2-trigger-strike', "Force-trigger a strike now (bypasses cooldown)", r2TriggerStrikeCmd)
 
 -- Mark zones dirty when player entities are built/destroyed (triggers immediate rescan)
 script.on_event(defines.events.on_built_entity, function(event)

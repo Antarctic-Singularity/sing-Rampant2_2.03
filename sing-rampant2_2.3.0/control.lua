@@ -45,6 +45,7 @@ local targetRanker = require("libs/TargetRanker")
 local debugCommands = require("libs/DebugCommands")
 local strikeManager = require("libs/StrikeManager")
 local strike2Manager = require("libs/Strike2Manager")
+local strike3Manager = require("libs/Strike3Manager")
 
 local hasSpaceAgeMod = script.active_mods["space-age"]
 
@@ -2167,6 +2168,30 @@ local function r2TriggerStrike2Cmd(event)
 end
 commands.add_command('r2-trigger-strike2', "Force-trigger a Strike2 directional attack (sets strike cooldown to 10 min)", r2TriggerStrike2Cmd)
 
+local function r2TriggerStrike3Cmd(event)
+	local universe = storage.universe
+	if not universe then
+		game.print("[Strike3] Universe not initialized")
+		return
+	end
+	local map = universe.maps and universe.maps[1]
+	if not map then
+		game.print("[Strike3] No map found")
+		return
+	end
+	if not map.strikeState then
+		game.print("[Strike3] State not initialized")
+		return
+	end
+	local success = strike3Manager.initiateStrike3(map, map.surface, universe)
+	if success then
+		game.print("[Strike3] Spawn strike initiated successfully!")
+	else
+		game.print("[Strike3] Failed to initiate spawn strike")
+	end
+end
+commands.add_command('r2-trigger-strike3', "Force-trigger a Strike3 spawn-based directional attack", r2TriggerStrike3Cmd)
+
 local function r2PauseAttacksCmd(event)
 	if not storage.universe then
 		game.print("Universe not initialized")
@@ -2182,7 +2207,7 @@ local function r2PauseAttacksCmd(event)
 	universe.attackPauseEndTick = game.tick + pauseDuration
 	game.print("[Rampant] ========== AUTO-ATTACKS PAUSED ==========")
 	game.print("[Rampant] Duration: 2 minutes (120 seconds)")
-	game.print("[Rampant] Command-triggered attacks (/r2-trigger-strike, /r2-trigger-strike2) still work")
+	game.print("[Rampant] Command-triggered attacks (/r2-trigger-strike, /r2-trigger-strike2, /r2-trigger-strike3) still work")
 	game.print("[Rampant] Use /r2-resume-attacks to cancel early")
 	game.print("[Rampant] ==========================================")
 end

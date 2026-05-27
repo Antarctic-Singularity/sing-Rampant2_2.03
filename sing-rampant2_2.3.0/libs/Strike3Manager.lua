@@ -177,6 +177,57 @@ local function spawnSquadAtNest(surface, nestChunk, squad, count)
     return spawned
 end
 
+-- Pick the tightest cluster of `count` nests from a candidate list.
+-- Strategy: for each candidate, compute the average distance to its nearest
+-- count-1 neighbours; pick the anchor with the smallest average (most dense
+-- local region). Then return the `count` nests closest to that anchor.
+local function findBestCluster(candidates, count)
+    if #candidates <= count then return candidates end
+
+    local bestAnchorIdx = 1
+    local bestAvgDist   = math.huge
+
+    for i, anchor in ipairs(candidates) do
+        -- Collect squared distances to every other candidate
+        local dists = {}
+        for j, other in ipairs(candidates) do
+            if j ~= i then
+                local dx = anchor.chunk.x - other.chunk.x
+                local dy = anchor.chunk.y - other.chunk.y
+                dists[#dists+1] = math.sqrt(dx*dx + dy*dy)
+            end
+        end
+        table.sort(dists)
+
+        -- Average the nearest count-1 distances
+        local k = math.min(count - 1, #dists)
+        local sum = 0
+        for n = 1, k do sum = sum + dists[n] end
+        local avg = k > 0 and (sum / k) or 0
+
+        if avg < bestAvgDist then
+            bestAvgDist   = avg
+            bestAnchorIdx = i
+        end
+    end
+
+    -- Gather the `count` nests closest to the winning anchor
+    local anchor = candidates[bestAnchorIdx]
+    local withDist = {}
+    for _, c in ipairs(candidates) do
+        local dx = anchor.chunk.x - c.chunk.x
+        local dy = anchor.chunk.y - c.chunk.y
+        withDist[#withDist+1] = {candidate = c, d = dx*dx + dy*dy}
+    end
+    table.sort(withDist, function(a, b) return a.d < b.d end)
+
+    local result = {}
+    for n = 1, math.min(count, #withDist) do
+        result[#result+1] = withDist[n].candidate
+    end
+    return result, math.floor(bestAvgDist)
+end
+
 -- ── MAIN ENTRY POINT ─────────────────────────────────────────────────────────
 
 function strike3Manager.initiateStrike3(map, surface, universe)
@@ -358,13 +409,19 @@ function strike3Manager.initiateStrike3(map, surface, universe)
         return false
     end
 
+    -- Cluster: pick the tightest group of nests so squads arrive together
+    local clusterAvgDist
+    candidates, clusterAvgDist = findBestCluster(candidates, strike3Manager.SQUADS_PER_STRIKE3)
+    game.print(string.format("[Strike3] Cluster selected: %d nests, avg inter-nest dist ~%d tiles",
+        #candidates, clusterAvgDist or 0))
+
     -- ── Deploy squads — always spawn, never gather ────────────────────────────
     local squadsDeployed = 0
     local chunkX, chunkY = mapUtils.positionToChunkXY(targetPos)
     local targetChunk    = mapUtils.getChunkByXY(map, chunkX, chunkY)
 
     for i = 1, strike3Manager.SQUADS_PER_STRIKE3 do
-        -- Spread squads across different nests (cycle through candidates list)
+        -- Each squad gets its own nest from the cluster (cycle if fewer nests than squads)
         local nestCandidate = candidates[((i - 1) % #candidates) + 1]
         local nestChunk = nestCandidate.chunk
 

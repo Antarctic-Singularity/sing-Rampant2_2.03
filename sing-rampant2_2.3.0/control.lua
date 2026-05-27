@@ -46,6 +46,7 @@ local debugCommands = require("libs/DebugCommands")
 local strikeManager = require("libs/StrikeManager")
 local strike2Manager = require("libs/Strike2Manager")
 local strike3Manager = require("libs/Strike3Manager")
+local strike4Manager = require("libs/Strike4Manager")
 
 local hasSpaceAgeMod = script.active_mods["space-age"]
 
@@ -2192,6 +2193,30 @@ local function r2TriggerStrike3Cmd(event)
 end
 commands.add_command('r2-trigger-strike3', "Force-trigger a Strike3 spawn-based directional attack", r2TriggerStrike3Cmd)
 
+local function r2TriggerStrike4Cmd(event)
+	local universe = storage.universe
+	if not universe then
+		game.print("[Strike4] Universe not initialized")
+		return
+	end
+	local map = universe.maps and universe.maps[1]
+	if not map then
+		game.print("[Strike4] No map found")
+		return
+	end
+	if not map.strikeState then
+		game.print("[Strike4] State not initialized")
+		return
+	end
+	local success = strike4Manager.initiateStrike4(map, map.surface, universe)
+	if success then
+		game.print("[Strike4] 2-squad spawn strike initiated!")
+	else
+		game.print("[Strike4] Failed to initiate spawn strike")
+	end
+end
+commands.add_command('r2-trigger-strike4', "Force-trigger a Strike4 2-squad spawn-based directional attack", r2TriggerStrike4Cmd)
+
 local function r2PauseAttacksCmd(event)
 	if not storage.universe then
 		game.print("Universe not initialized")
@@ -2207,7 +2232,7 @@ local function r2PauseAttacksCmd(event)
 	universe.attackPauseEndTick = game.tick + pauseDuration
 	game.print("[Rampant] ========== AUTO-ATTACKS PAUSED ==========")
 	game.print("[Rampant] Duration: 2 minutes (120 seconds)")
-	game.print("[Rampant] Command-triggered attacks (/r2-trigger-strike, /r2-trigger-strike2, /r2-trigger-strike3) still work")
+	game.print("[Rampant] Command-triggered attacks (/r2-trigger-strike, /r2-trigger-strike2, /r2-trigger-strike3, /r2-trigger-strike4) still work")
 	game.print("[Rampant] Use /r2-resume-attacks to cancel early")
 	game.print("[Rampant] ==========================================")
 end

@@ -14,8 +14,8 @@ local mapUtils = require("libs/MapUtils")
 strike4Manager.STRIKE4_ENABLED_EVOLUTION  = 0.20
 strike4Manager.SQUADS_PER_STRIKE4         = 2
 strike4Manager.BITERS_PER_SQUAD           = 40
-strike4Manager.MIN_NEST_DISTANCE          = 300
-strike4Manager.MAX_NEST_DISTANCE          = 800
+strike4Manager.MIN_NEST_DISTANCE          = 200
+strike4Manager.MAX_NEST_DISTANCE          = 400
 strike4Manager.STRIKE_COOLDOWN_ON_STRIKE4 = 10 * 60 * 60
 
 local DIRECTIONS = {

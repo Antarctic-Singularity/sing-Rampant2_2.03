@@ -30,7 +30,7 @@ The mod now analyzes the game world through a strategic zone-based system:
   - Random category selection from available zone types
   - Multi-squad deployment (3 squads per strike)
   - 15-minute cooldown between strikes
-  - Alert notifications to players with GPS links
+  - Alert notifications to players with GPS links 
 
 ### Debug System
 Comprehensive debug tools for development and testing:

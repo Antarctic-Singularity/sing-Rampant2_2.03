@@ -556,7 +556,16 @@ local function attackMove(map, squad)
     else
 		cmd_type = "move"
     end
-	
+
+	-- Strike2: Force move-mode until close to objective to avoid premature engagement
+	if squad.strike2 and squad.strikeObjective then
+		local distToObjective = math.sqrt((groupPosition.x - squad.strikeObjective.x)^2 +
+										  (groupPosition.y - squad.strikeObjective.y)^2)
+		if distToObjective > CHUNK_SIZE * 2 then
+			cmd_type = "move"
+		end
+	end
+
 	if cmd_type == "attack" then
 		cmd = universe.compoundAttackCommand
        if not squad.rabid then

@@ -44,6 +44,7 @@ local zoneManager = require("libs/ZoneManager")
 local targetRanker = require("libs/TargetRanker")
 local debugCommands = require("libs/DebugCommands")
 local strikeManager = require("libs/StrikeManager")
+local strike2Manager = require("libs/Strike2Manager")
 
 local hasSpaceAgeMod = script.active_mods["space-age"]
 
@@ -1500,7 +1501,10 @@ script.on_event(defines.events.on_tick,
                         scanResourceMap(map, tick)		
                     elseif (pick == 5) then
                         scanEnemyMap(map, tick)
-                        processSpawners(map, tick)
+                        -- Check if auto-attacks are paused
+                        if not universe.attackPauseEndTick or game.tick >= universe.attackPauseEndTick then
+                            processSpawners(map, tick)
+                        end
                     elseif (pick == 6) then
                         scanPlayerMap(map, tick)		
                         processNests(map, tick)			
@@ -1525,7 +1529,10 @@ script.on_nth_tick(120,
 	function()
 		if universe and universe.activeMap then
 			zoneManager.processZoneScan(universe.activeMap, universe.activeMap.surface)
-			strikeManager.processStrikes(universe.activeMap, universe.activeMap.surface, storage.universe)
+			-- Check if auto-attacks are paused
+			if not universe.attackPauseEndTick or game.tick >= universe.attackPauseEndTick then
+				strikeManager.processStrikes(universe.activeMap, universe.activeMap.surface, storage.universe)
+			end
 		end
 	end
 )
@@ -2133,6 +2140,64 @@ local function r2TriggerStrikeCmd(event)
 	game.print("[Strike] Manually triggered. Run /r2-trigger-strike again for another.")
 end
 commands.add_command('r2-trigger-strike', "Force-trigger a strike now (bypasses cooldown)", r2TriggerStrikeCmd)
+
+local function r2TriggerStrike2Cmd(event)
+	if not storage.universe then
+		game.print("Universe not initialized")
+		return
+	end
+	local universe = storage.universe
+	local map = universe.activeMap
+	if not map then
+		game.print("No active map")
+		return
+	end
+	if not map.strikeState then
+		game.print("[Strike2] State not initialized")
+		return
+	end
+	-- Strike2 initiates immediately without cooldown bypass needed
+	-- Set regular strike cooldown to 10 minutes as side effect
+	local success = strike2Manager.initiateStrike2(map, map.surface, universe)
+	if success then
+		game.print("[Strike2] Directional strike initiated successfully!")
+	else
+		game.print("[Strike2] Failed to initiate directional strike")
+	end
+end
+commands.add_command('r2-trigger-strike2', "Force-trigger a Strike2 directional attack (sets strike cooldown to 10 min)", r2TriggerStrike2Cmd)
+
+local function r2PauseAttacksCmd(event)
+	if not storage.universe then
+		game.print("Universe not initialized")
+		return
+	end
+	local universe = storage.universe
+	local pauseDuration = 120 * 60  -- 2 minutes in ticks (120 seconds * 60 ticks/sec)
+
+	if not universe.attackPauseEndTick then
+		universe.attackPauseEndTick = 0
+	end
+
+	universe.attackPauseEndTick = game.tick + pauseDuration
+	game.print("[Rampant] ========== AUTO-ATTACKS PAUSED ==========")
+	game.print("[Rampant] Duration: 2 minutes (120 seconds)")
+	game.print("[Rampant] Command-triggered attacks (/r2-trigger-strike, /r2-trigger-strike2) still work")
+	game.print("[Rampant] Use /r2-resume-attacks to cancel early")
+	game.print("[Rampant] ==========================================")
+end
+commands.add_command('r2-pause-attacks', "Pause all auto-attacks for 2 minutes (command-triggered attacks still work)", r2PauseAttacksCmd)
+
+local function r2ResumeAttacksCmd(event)
+	if not storage.universe then
+		game.print("Universe not initialized")
+		return
+	end
+	local universe = storage.universe
+	universe.attackPauseEndTick = 0
+	game.print("[Rampant] Auto-attacks resumed")
+end
+commands.add_command('r2-resume-attacks', "Resume auto-attacks immediately", r2ResumeAttacksCmd)
 
 -- Mark zones dirty when player entities are built/destroyed (triggers immediate rescan)
 script.on_event(defines.events.on_built_entity, function(event)

@@ -165,7 +165,7 @@ local function spawnSquadAtNest(surface, nestChunk, squad, count)
     local spawned = 0
     for _ = 1, count do
         local utype = unitTypes[math.random(1, #unitTypes)]
-        local pos = surface.find_non_colliding_position(utype, anchor, 32, 4, true)
+        local pos = surface.find_non_colliding_position(utype, anchor, constants.CHUNK_SIZE * 2, 8, true)
         if pos then
             local unit = surface.create_entity({name = utype, position = pos, force = "enemy"})
             if unit and unit.valid then
@@ -426,15 +426,14 @@ function strike3Manager.initiateStrike3(map, surface, universe)
         local nestChunk = nestCandidate.chunk
 
         -- Find a spawn position near the nest
+        -- Unit groups have no collision so any land position works.
+        -- Try find_non_colliding_position first (larger radius to clear the spawner building),
+        -- then fall back to a direct offset — create_unit_group doesn't need collision-free pos.
+        local nestCenter = {x = nestChunk.x + 16, y = nestChunk.y + 16}
         local spawnPos = surface.find_non_colliding_position(
-            "chunk-scanner-squad-rampant",
-            {x = nestChunk.x + 8, y = nestChunk.y + 8},
-            constants.CHUNK_SIZE, 8, true
-        )
-        if not spawnPos then
-            game.print("[Strike3] Squad " .. i .. " FAILED - no position near nest [gps="
-                .. math.floor(nestChunk.x) .. "," .. math.floor(nestChunk.y) .. "," .. surface.name .. "]")
-        else
+            "chunk-scanner-squad-rampant", nestCenter, constants.CHUNK_SIZE * 3, 16, true
+        ) or nestCenter
+        do
             local squad = unitGroupUtils.createSquad(spawnPos, map)
             if squad then
                 local spawned = spawnSquadAtNest(surface, nestChunk, squad, strike3Manager.BITERS_PER_SQUAD)
@@ -462,7 +461,7 @@ function strike3Manager.initiateStrike3(map, surface, universe)
                     game.print("[Strike3] Squad " .. i .. " FAILED - spawn produced 0 biters")
                 end
             end
-        end
+        end  -- do
     end
 
     game.print("[Strike3] " .. squadsDeployed .. "/" .. strike3Manager.SQUADS_PER_STRIKE3

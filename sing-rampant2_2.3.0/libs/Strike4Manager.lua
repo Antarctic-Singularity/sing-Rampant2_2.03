@@ -123,26 +123,47 @@ end
 
 -- ── SPAWN HELPER ──────────────────────────────────────────────────────────────
 
+-- Relative chance of a spawner's result unit at the given evolution. Reads the
+-- prototype's spawn_points curve (linear between points), so tiers outside the
+-- current evolution get weight 0 instead of being picked as max-level biters.
+local function unitWeightAtEvo(spawnPoints, evo)
+    if not spawnPoints then return 1 end
+    local prev
+    for _, point in ipairs(spawnPoints) do
+        if point.evolution_factor > evo then
+            if not prev then return point.weight end
+            local t = (evo - prev.evolution_factor) / (point.evolution_factor - prev.evolution_factor)
+            return prev.weight + (point.weight - prev.weight) * t
+        end
+        prev = point
+    end
+    return prev and prev.weight or 0
+end
+
 local function getUnitTypesForNest(surface, nestChunk)
     local nestX, nestY = nestChunk.x, nestChunk.y
+    local evo = game.forces.enemy.get_evolution_factor(surface)
     local spawners = surface.find_entities_filtered{
         type  = "unit-spawner",
         area  = {{nestX - 48, nestY - 48}, {nestX + 48, nestY + 48}},
         limit = 3
     }
-    local unitTypes = {}
+    local unitTypes, weights = {}, {}
     for _, spawner in ipairs(spawners) do
         if spawner.valid then
             local ru = spawner.prototype.result_units
             if ru then
                 for _, def in ipairs(ru) do
-                    unitTypes[#unitTypes+1] = def.unit
+                    local weight = unitWeightAtEvo(def.spawn_points, evo)
+                    if weight > 0 then
+                        unitTypes[#unitTypes+1] = def.unit
+                        weights[#weights+1] = weight
+                    end
                 end
             end
         end
     end
     if #unitTypes == 0 then
-        local evo = game.forces.enemy.get_evolution_factor(surface)
         if evo < 0.3 then
             unitTypes = {"small-biter"}
         elseif evo < 0.6 then
@@ -152,16 +173,29 @@ local function getUnitTypesForNest(surface, nestChunk)
         else
             unitTypes = {"big-biter", "behemoth-biter"}
         end
+        weights = {}
+        for i = 1, #unitTypes do weights[i] = 1 end
     end
-    return unitTypes
+    return unitTypes, weights
+end
+
+local function pickWeighted(unitTypes, weights)
+    local total = 0
+    for _, w in ipairs(weights) do total = total + w end
+    local roll = math.random() * total
+    for i, w in ipairs(weights) do
+        roll = roll - w
+        if roll <= 0 then return unitTypes[i] end
+    end
+    return unitTypes[#unitTypes]
 end
 
 local function spawnSquadAtNest(surface, nestChunk, squad, count)
-    local unitTypes = getUnitTypesForNest(surface, nestChunk)
+    local unitTypes, weights = getUnitTypesForNest(surface, nestChunk)
     local anchor = {x = nestChunk.x + 8, y = nestChunk.y + 8}
     local spawned = 0
     for _ = 1, count do
-        local utype = unitTypes[math.random(1, #unitTypes)]
+        local utype = pickWeighted(unitTypes, weights)
         local pos = surface.find_non_colliding_position(utype, anchor, constants.CHUNK_SIZE * 2, 8, true)
         if pos then
             local unit = surface.create_entity({name = utype, position = pos, force = "enemy"})

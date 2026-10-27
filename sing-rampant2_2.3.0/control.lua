@@ -1627,7 +1627,7 @@ script.on_nth_tick(30,
 	function()
 		if universe then
 			undergroundAttack.processUndergroundSquads(universe)
-				strikeRetreat.onTick() -- STRIKE RETREAT
+				strikeRetreat.onTick(universe) -- STRIKE RETREAT
 		end
 	end
 )

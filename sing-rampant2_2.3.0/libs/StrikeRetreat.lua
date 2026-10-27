@@ -75,9 +75,75 @@ function strikeRetreat.onUnitDamaged(event, universe)
     }
 end
 
+-- Strike transit: a squad unit that doesn't move for STUCK_TICKS while its squad is still in
+-- transit gets its own move order with distraction re-enabled, and keeps it until transit ends.
+local STUCK_TICKS = 2 * 60
+local STUCK_MOVE_DISTANCE = 0.5
+
+local function getStuckState()
+    storage.strikeStuck = storage.strikeStuck or {}
+    return storage.strikeStuck
+end
+
+local function squadInTransit(squad)
+    if not (squad.strike2 and squad.strikeObjective and squad.strikeStart and squad.group and squad.group.valid) then
+        return false
+    end
+    local total = math.sqrt((squad.strikeStart.x - squad.strikeObjective.x) ^ 2 + (squad.strikeStart.y - squad.strikeObjective.y) ^ 2)
+    if total <= 0 then return false end
+    local pos = squad.group.position
+    local remaining = math.sqrt((pos.x - squad.strikeObjective.x) ^ 2 + (pos.y - squad.strikeObjective.y) ^ 2)
+    return (1 - remaining / total) < 0.75
+end
+
+local function checkStuckUnits(universe)
+    local now = game.tick
+    local stuck = getStuckState()
+    local seen = {}
+    for _, squad in pairs(universe.groupNumberToSquad) do
+        if squadInTransit(squad) then
+            for _, unit in pairs(squad.group.members) do
+                if unit.valid and unit.commandable then
+                    local num = unit.unit_number
+                    seen[num] = true
+                    local st = stuck[num]
+                    if not st then
+                        st = {x = unit.position.x, y = unit.position.y, tick = now, reenabled = false}
+                        stuck[num] = st
+                    end
+                    local dx, dy = unit.position.x - st.x, unit.position.y - st.y
+                    if dx * dx + dy * dy > STUCK_MOVE_DISTANCE * STUCK_MOVE_DISTANCE then
+                        st.x, st.y, st.tick = unit.position.x, unit.position.y, now
+                    elseif now - st.tick >= STUCK_TICKS then
+                        st.reenabled = true
+                    end
+                    -- Units on their own retreat keep their retreat order
+                    local retreating = storage.strikeRetreat and storage.strikeRetreat[num] and storage.strikeRetreat[num].retreatEnd
+                    if st.reenabled and not retreating then
+                        unit.commandable.set_command({
+                            type = defines.command.go_to_location,
+                            destination = squad.strikeObjective,
+                            distraction = defines.distraction.by_enemy,
+                            radius = 3,
+                        })
+                    end
+                end
+            end
+        end
+    end
+    -- Forget units that are gone or no longer in transit
+    for num in pairs(stuck) do
+        if not seen[num] then stuck[num] = nil end
+    end
+end
+
 -- Called every 30 ticks from the existing on_nth_tick(30) handler
-function strikeRetreat.onTick()
-    if not ENABLED or not storage.strikeRetreat then return end
+function strikeRetreat.onTick(universe)
+    if not ENABLED then return end
+    if universe and universe.groupNumberToSquad then
+        checkStuckUnits(universe)
+    end
+    if not storage.strikeRetreat then return end
     local tick = game.tick
     local state = storage.strikeRetreat
     for unitNumber, entry in pairs(state) do

@@ -7,12 +7,26 @@
 Version: 2.3.1 (Development)
 Date: 2026.10.27
   Features:
-    - Strike retreat: units hit early in an attack run away from the attacker for a few seconds and speed up
-    - Strike size is now adjustable in map settings: squads per strike (default 3) and biters per squad (default 60)
-    - Strikes avoid hitting the same zone twice in a row, and zones that were hit recover over time
-    - Zones with military structures are now detected as outposts more reliably
+    - Strike retreat: a strike unit hit early in its approach (before it has covered 75% of its path) runs 10 tiles straight away from its attacker for 5 seconds, then rejoins the attack. It gets a short speed boost too. Each unit can do this once.
+    - Strike size is now adjustable in map settings:
+      - Squads per strike: default 3, range 1-10
+      - Biters per squad: default 60, range 1-500
+    - Strike units get a 5-second speed boost after they spawn.
+    - Strikes now pick targets from stronger zones only:
+      - Production zones (products, oil, raw resources) must be in the top 30% of producing zones by output
+      - Power zones must be in the top 30% of generating zones by power output
+      - Outposts must be in the top 80% of outposts by military building count
+    - Zones that were just struck can't be struck again right away. If the picked zone is unavailable, the strike rerolls in the same category, then in a random category, before failing. A struck zone recovers one step per strike, up to 3 steps.
+    - Natural strikes and the /r2-strike command now use the same strike logic, so both deploy squads the same way.
+  Changes:
+    - Natural strikes still need 20% evolution and wait for the cooldown. The cooldown is now 10 minutes between strikes.
+    - /r2-strike ignores the evolution threshold and the cooldown, so it can be used at any time.
+    - Strike alerts and chat messages now report the actual number of squads deployed instead of a fixed count.
+    - Outpost detection is stricter: a zone counts as an outpost only when it has 8+ military buildings, at least 6 neighbouring zones with no production, and all of its neighbours have been scanned. Military structures now make their neighbouring zones get scanned, so the check has full information.
+    - Removed the old Strike 2 and Strike 3 directional attacks and their /r2-trigger-strike commands. Use /r2-strike instead.
   Bugfixes:
-    - Strike command (/r2-strike) no longer checks evolution before it starts
+    - /r2-strike no longer checks evolution before it starts.
+    - Outposts no longer appear for zones whose neighbours haven't been scanned yet.
 
 ---------------------------------------------------------------------------------------------------
 Version: 2.3.0 (Development)

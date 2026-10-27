@@ -557,12 +557,15 @@ local function attackMove(map, squad)
 		cmd_type = "move"
     end
 
-	-- Strike: Force move-mode until close to objective to avoid premature engagement
+	-- Strike: stay in transit (move, no distraction) until 75% of the spawn-to-objective distance is covered
 	local strikeInTransit = false
-	if squad.strike2 and squad.strikeObjective then
-		local distToObjective = math.sqrt((groupPosition.x - squad.strikeObjective.x)^2 +
-										  (groupPosition.y - squad.strikeObjective.y)^2)
-		if distToObjective > CHUNK_SIZE * 2 then
+	if squad.strike2 and squad.strikeObjective and squad.strikeStart then
+		local totalDist = math.sqrt((squad.strikeStart.x - squad.strikeObjective.x)^2 +
+									(squad.strikeStart.y - squad.strikeObjective.y)^2)
+		local remainingDist = math.sqrt((groupPosition.x - squad.strikeObjective.x)^2 +
+										(groupPosition.y - squad.strikeObjective.y)^2)
+		local covered = (totalDist > 0) and (1 - remainingDist / totalDist) or 1
+		if covered < 0.75 then
 			cmd_type = "move"; strikeInTransit = true
 		end
 	end

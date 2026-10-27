@@ -395,19 +395,21 @@ function strikeTargeting.selectStrikeTarget(map, label, validate)
     end
 
     math.randomseed(game.tick + game.tick)
-    local selectedCat = availableCats[math.random(1, #availableCats)]
-    local target = pickZoneInCategory(selectedCat)
-
-    -- Picked zone is at 0 allowance: reroll in the same category, then in a random category
-    if not usable(target) then
-        target = pickZoneInCategory(selectedCat)
-    end
-    if not usable(target) then
+    -- Up to 3 target picks per category (strike allowance or route gate), then reroll the category
+    local selectedCat, target
+    for _ = 1, #availableCats do
         selectedCat = availableCats[math.random(1, #availableCats)]
-        target = pickZoneInCategory(selectedCat)
+        for _ = 1, 3 do
+            local candidate = pickZoneInCategory(selectedCat)
+            if usable(candidate) then
+                target = candidate
+                break
+            end
+        end
+        if target then break end
     end
-    if not usable(target) then
-        game.print(label .. " Failed: rerolled zones have no strike allowance or fail the path check")
+    if not target then
+        game.print(label .. " Failed: no usable target after rerolling categories")
         return nil
     end
 

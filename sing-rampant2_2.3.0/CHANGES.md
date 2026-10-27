@@ -58,6 +58,12 @@ Shared by both paths. Each invocation:
 ### Map color (startup setting)
 - `rampantFixed--allBitersRedMapColor` (startup, default off) sets `enemy_map_color` to red on the unit, spitter, spawner, and worm prototypes in `prototypes/utils/BiterUtils.lua`.
 
+### Path check (`libs/StrikeManager.lua`, `pathCheck`)
+- Runs after the existing direction and zone rules. It uses the nearest nest that passes those rules and lies within the nest distance band.
+- Samples the straight line from that nest to the target every 8 tiles. Missing zones and category NONE zones don't count. The start and target zones are excluded.
+- More than one counted zone on the path fails the pick, so the normal same-category and random-category rerolls apply.
+- Known gap: a short clip across a zone corner between samples can be missed.
+
 ## Zone system
 
 ### Outpost detection (`strikeTargeting.getZoneCategory`)

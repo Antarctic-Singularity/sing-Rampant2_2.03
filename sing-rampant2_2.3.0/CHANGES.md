@@ -55,6 +55,9 @@ Shared by both paths. Each invocation:
 - Risk: if player buildings block the route before 75%, the squad may stall, since it won't attack them while in transit. Not yet tested in game.
 - Per unit: a squad unit that does not move for 2 seconds (120 ticks) while its squad is in transit gets its own move order with distraction `by_enemy`, re-applied every 30 ticks until transit ends. Units on a retreat keep their retreat order. Implemented in `checkStuckUnits` in `libs/StrikeRetreat.lua`. Not yet tested in game; the group command may fight this.
 
+### Map color (startup setting)
+- `rampantFixed--allBitersRedMapColor` (startup, default off) sets `enemy_map_color` to red on the unit, spitter, spawner, and worm prototypes in `prototypes/utils/BiterUtils.lua`.
+
 ## Zone system
 
 ### Outpost detection (`strikeTargeting.getZoneCategory`)

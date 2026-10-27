@@ -298,7 +298,7 @@ end
 -- Picks the zone for one strike invocation. Returns target, selectedCat, and the
 -- populations used by the percentile rules. Returns nil if no zone can be struck.
 -- Does not mark the zone; the caller marks it once the strike is committed.
-function strikeTargeting.selectStrikeTarget(map, label)
+function strikeTargeting.selectStrikeTarget(map, label, validate)
     -- Recover strikeAllow for this invocation, except the zone struck in the previous one
     for _, zone in ipairs(map.zonesByIndex) do
         if zone ~= map.strikeAllowLastStruck then
@@ -389,20 +389,25 @@ function strikeTargeting.selectStrikeTarget(map, label)
         return chosen
     end
 
+    -- A zone is usable if it has strike allowance and passes the optional validator
+    local function usable(zone)
+        return strikeTargeting.getStrikeAllow(zone) > 0 and (not validate or validate(zone))
+    end
+
     math.randomseed(game.tick + game.tick)
     local selectedCat = availableCats[math.random(1, #availableCats)]
     local target = pickZoneInCategory(selectedCat)
 
     -- Picked zone is at 0 allowance: reroll in the same category, then in a random category
-    if strikeTargeting.getStrikeAllow(target) == 0 then
+    if not usable(target) then
         target = pickZoneInCategory(selectedCat)
     end
-    if strikeTargeting.getStrikeAllow(target) == 0 then
+    if not usable(target) then
         selectedCat = availableCats[math.random(1, #availableCats)]
         target = pickZoneInCategory(selectedCat)
     end
-    if strikeTargeting.getStrikeAllow(target) == 0 then
-        game.print(label .. " Failed: rerolled zones are all at 0 strike allowance")
+    if not usable(target) then
+        game.print(label .. " Failed: rerolled zones have no strike allowance or fail the path check")
         return nil
     end
 

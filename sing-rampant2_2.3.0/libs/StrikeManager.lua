@@ -264,6 +264,62 @@ end
 
 -- ── MAIN ENTRY POINT ─────────────────────────────────────────────────────────
 
+-- Path check: the line from the first nest (nearest that passes the direction and zone rules,
+-- inside the nest distance band) to the target may cross at most one other zone that has a
+-- category. Zones that are missing or have category NONE don't count. Samples are PATH_STEP tiles
+-- apart, so a short clip across a zone corner can be missed.
+local PATH_STEP = 8
+
+local function countCrossedZones(map, fromPos, toPos)
+    local dx, dy = toPos.x - fromPos.x, toPos.y - fromPos.y
+    local length = math.sqrt(dx * dx + dy * dy)
+    local steps = math.max(1, math.floor(length / PATH_STEP))
+    local tileSize = zoneManager.ZONE_TILE_SIZE
+    local startZX, startZY = math.floor(fromPos.x / tileSize), math.floor(fromPos.y / tileSize)
+    local endZX, endZY = math.floor(toPos.x / tileSize), math.floor(toPos.y / tileSize)
+    local seen, count = {}, 0
+    for i = 0, steps do
+        local t = i / steps
+        local zx = math.floor((fromPos.x + dx * t) / tileSize)
+        local zy = math.floor((fromPos.y + dy * t) / tileSize)
+        local key = zx .. ":" .. zy
+        local isEnd = (zx == startZX and zy == startZY) or (zx == endZX and zy == endZY)
+        if not seen[key] and not isEnd then
+            seen[key] = true
+            local zone = map.zones[zx] and map.zones[zx][zy]
+            if zone and strikeTargeting.getZoneCategory(zone, map) then
+                count = count + 1
+            end
+        end
+        seen[key] = true
+    end
+    return count
+end
+
+local function pathCheck(map, target)
+    local strikeDirection = determineStrikeDirection(map, target)
+    if not strikeDirection then return false end
+    local tileSize = zoneManager.ZONE_TILE_SIZE
+    local targetX = target.tileX + tileSize / 2
+    local targetY = target.tileY + tileSize / 2
+    local minDistSq = strikeManager.MIN_NEST_DISTANCE * strikeManager.MIN_NEST_DISTANCE
+    local maxDistSq = strikeManager.MAX_NEST_DISTANCE * strikeManager.MAX_NEST_DISTANCE
+    local firstNest, firstDistSq = nil, nil
+    for nestChunk in pairs(map.chunkToNests or {}) do
+        if nestChunk and nestChunk ~= -1 then
+            local dx, dy = nestChunk.x - targetX, nestChunk.y - targetY
+            local distSq = dx * dx + dy * dy
+            if distSq >= minDistSq and distSq <= maxDistSq and (not firstDistSq or distSq < firstDistSq)
+                and nestPassesDirectionAndZoneCheck(nestChunk, target, strikeDirection, map) == "ok" then
+                firstNest, firstDistSq = nestChunk, distSq
+            end
+        end
+    end
+    -- No suitable nest to test: let the nest search decide
+    if not firstNest then return true end
+    return countCrossedZones(map, {x = firstNest.x, y = firstNest.y}, {x = targetX, y = targetY}) <= 1
+end
+
 function strikeManager.strike(map, surface, universe)
     if not map or not map.strikeState or not map.zonesByIndex or #map.zonesByIndex == 0 then
         game.print("[Strike] Cannot initiate: map or zones not ready")
@@ -276,7 +332,7 @@ function strikeManager.strike(map, surface, universe)
     local bitersPerSquad = settings.global["rampantFixed--strikeBitersPerSquad"].value
 
     -- ── Target selection (shared with natural strikes) ────────────────────────
-    local target, selectedCat, populations = strikeTargeting.selectStrikeTarget(map, "[Strike]")
+    local target, selectedCat, populations = strikeTargeting.selectStrikeTarget(map, "[Strike]", function(candidate) return pathCheck(map, candidate) end)
     if not target then
         return false
     end

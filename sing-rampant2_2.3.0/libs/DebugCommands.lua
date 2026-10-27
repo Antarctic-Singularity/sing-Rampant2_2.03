@@ -7,6 +7,26 @@ local zoneManager = require("libs/ZoneManager")
 local constants = require("libs/Constants")
 local strikeTargeting = require("libs/StrikeTargeting")
 
+-- Output figure shown on the zone overlay for each category
+local function getCategoryOutput(zone, cat)
+    if cat == "products" then
+        return strikeTargeting.calculateProductValue(zone), "VAL"
+    elseif cat == "oil" or cat == "raw-resources" then
+        local total = 0
+        for itemName, rate in pairs(zone.products or {}) do
+            if rate > 0 and strikeTargeting.ITEM_CATEGORIES[itemName] == cat then
+                total = total + rate
+            end
+        end
+        return total, "OUT"
+    elseif cat == "power" then
+        return zone.powerGen or 0, "MW"
+    elseif cat == "outpost" then
+        return zone.militaryBuildingCount or 0, "MIL"
+    end
+    return nil
+end
+
 function debugCommands.drawZoneOverlay(player, map)
     if not map.zonesByIndex then
         game.print("No zones initialized")
@@ -17,6 +37,22 @@ function debugCommands.drawZoneOverlay(player, map)
     if surface.index ~= map.surface.index then
         game.print("Must be on the same surface as the map")
         return
+    end
+
+    -- Percentile population: producing zones in the categories the strike filter applies to
+    local percentileCats = {["products"] = true, ["oil"] = true, ["raw-resources"] = true}
+    local producingRates = {}
+    local powerRates = {}
+    local outpostRates = {}
+    for _, zone in ipairs(map.zonesByIndex) do
+        local cat = strikeTargeting.getZoneCategory(zone, map)
+        if cat and percentileCats[cat] and (zone.totalRate or 0) > 0 then
+            producingRates[#producingRates + 1] = zone.totalRate
+        elseif cat == "power" and (zone.powerGen or 0) > 0 then
+            powerRates[#powerRates + 1] = zone.powerGen
+        elseif cat == "outpost" then
+            outpostRates[#outpostRates + 1] = zone.militaryBuildingCount or 0
+        end
     end
 
     for _, zone in ipairs(map.zonesByIndex) do
@@ -35,14 +71,16 @@ function debugCommands.drawZoneOverlay(player, map)
             color = {r=0.1, g=0.4+intensity*0.5, b=0.1, a=0.9}
         end
 
+        -- Zones with a category get a 2x thicker border than NONE zones
+        local borderWidth = strikeTargeting.getZoneCategory(zone, map) and 8 or 4
         rendering.draw_rectangle({
             color = color,
             filled = false,
-            width = 4,
+            width = borderWidth,
             left_top = {x0, y0},
             right_bottom = {x1, y1},
             surface = surface,
-            time_to_live = 600,
+            time_to_live = 2400,
             render_mode = "chart"
         })
 
@@ -79,14 +117,34 @@ function debugCommands.drawZoneOverlay(player, map)
 
         -- Line 4: Category and value
         local line4 = "CAT:" .. categoryStr
-        if category == "products" then
-            local value = strikeTargeting.calculateProductValue(zone)
-            line4 = line4 .. string.format(" VAL:%d", math.floor(value))
+        local output, outputLabel = getCategoryOutput(zone, category)
+        if output then
+            line4 = line4 .. string.format(" %s:%.1f", outputLabel, output)
         end
+
+        -- Line 5: Percentile of production among producing zones
+        -- Products/oil/raw use item output, power uses generation, outpost uses military buildings
+        local percentileText = "n/a"
+        local value, population
+        if category and percentileCats[category] and (zone.totalRate or 0) > 0 then
+            value, population = zone.totalRate, producingRates
+        elseif category == "power" and (zone.powerGen or 0) > 0 then
+            value, population = zone.powerGen, powerRates
+        elseif category == "outpost" and (zone.militaryBuildingCount or 0) > 0 then
+            value, population = zone.militaryBuildingCount, outpostRates
+        end
+        if value then
+            local atOrBelow = 0
+            for _, rate in ipairs(population) do
+                if rate <= value then atOrBelow = atOrBelow + 1 end
+            end
+            percentileText = string.format("%.0f%%", atOrBelow / #population * 100)
+        end
+        local line5 = "PCT:" .. percentileText
 
         -- Draw each line at different vertical positions
         local yOffset = -12  -- start above center
-        for _, lineText in ipairs({line1, line2, line3, line4}) do
+        for _, lineText in ipairs({line1, line2, line3, line4, line5}) do
             rendering.draw_text({
                 text = lineText,
                 surface = surface,
@@ -94,7 +152,7 @@ function debugCommands.drawZoneOverlay(player, map)
                 color = {r=1, g=1, b=1, a=1},
                 scale = 10,
                 alignment = "center",
-                time_to_live = 600,
+                time_to_live = 2400,
                 render_mode = "chart",
                 scale_with_zoom = false
             })
@@ -249,9 +307,7 @@ function debugCommands.printTargets(map)
 end
 
 function debugCommands.clearAllOverlays(player)
-    for _, obj in ipairs(rendering.get_all_objects(player)) do
-        rendering.destroy(obj)
-    end
+    rendering.clear(script.mod_name)
     game.print("All overlays cleared")
 end
 

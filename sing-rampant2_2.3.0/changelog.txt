@@ -22,6 +22,14 @@ Date: 2026.05.25
       - Debug printing available via rampantFixed--debugStrikeTargeting setting
     - Target Ranker: Ranks zones by relative production share to identify priority targets
     - Debug System: Comprehensive debug tools for development and testing
+    - Strike retreat: strike units hit before covering 75% of their trip run away from the attacker for 5s and get a 1.5x speed boost (once per unit)
+    - Strike squads per strike and biters per squad are map settings (defaults 3 and 60)
+    - Per-zone strike allowance: a struck zone recovers over later strikes; rerolls avoid zones at 0
+    - Zone overlay: per-category output, production percentile line, 2x borders for categorized zones, 40s display
+  Bugfixes:
+    - Outpost detection no longer counts missing or unscanned neighbours as empty
+    - /r2-clear no longer errors on rendering.destroy (uses rendering.clear)
+    - /r2-strike is no longer blocked by the evolution check
   Infrastructure:
     - Created libs/ZoneManager.lua — Zone grid, 4-phase production scanning
     - Created libs/StrikeTargeting.lua — Zone categorization and target ranking by tier

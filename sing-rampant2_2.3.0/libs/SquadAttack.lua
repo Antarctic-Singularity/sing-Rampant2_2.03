@@ -558,11 +558,12 @@ local function attackMove(map, squad)
     end
 
 	-- Strike: Force move-mode until close to objective to avoid premature engagement
+	local strikeInTransit = false
 	if squad.strike2 and squad.strikeObjective then
 		local distToObjective = math.sqrt((groupPosition.x - squad.strikeObjective.x)^2 +
 										  (groupPosition.y - squad.strikeObjective.y)^2)
 		if distToObjective > CHUNK_SIZE * 2 then
-			cmd_type = "move"
+			cmd_type = "move"; strikeInTransit = true
 		end
 	end
 

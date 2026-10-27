@@ -35,7 +35,7 @@ Shared by both paths. Each invocation:
 - `rampantFixed--debugStrikeTargeting`: prints the target, category, output, and percentile to chat.
 
 ### Strike retreat (`libs/StrikeRetreat.lua`)
-- A strike unit hit by a player-side attacker, before 75% of its spawn-to-objective trip is covered, triggers once.
+- A strike unit hit by a player-side attacker, before 90% of its spawn-to-objective trip is covered, triggers once.
 - The unit gets a `go_to_location` command 10 tiles directly away from the attacker for 5 seconds. Afterwards it is sent back to the objective.
 - Its speed boost (`retreatSpeed-sticker-rampantFixed`, 1.5x, 5 seconds) starts once the spawn sticker ends, so the two never stack.
 - Hooks: `onUnitDamaged` in `onEntityDamaged`, and `onTick` in the 30-tick handler. Both are tagged `STRIKE RETREAT`.

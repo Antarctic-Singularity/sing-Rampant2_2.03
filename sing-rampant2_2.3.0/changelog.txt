@@ -7,7 +7,7 @@
 Version: 2.3.1 (Development)
 Date: 2026.10.27
   Features:
-    - Strike retreat: a strike unit hit early in its approach (before it has covered 75% of its path) runs 10 tiles straight away from its attacker for 5 seconds, then rejoins the attack. It gets a short speed boost too. Each unit can do this once.
+    - Strike retreat: a strike unit hit early in its approach (before it has covered 90% of its path) runs 10 tiles straight away from its attacker for 5 seconds, then rejoins the attack. It gets a short speed boost too. Each unit can do this once.
     - Strike size is now adjustable in map settings:
       - Squads per strike: default 3, range 1-10
       - Biters per squad: default 60, range 1-500

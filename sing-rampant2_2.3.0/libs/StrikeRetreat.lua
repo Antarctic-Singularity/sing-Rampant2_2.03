@@ -1,4 +1,4 @@
--- Strike retreat: a strike unit hit before it has covered 75% of its trip gets a
+-- Strike retreat: a strike unit hit before it has covered 90% of its trip gets a
 -- speed boost and runs straight away from its attacker for 5 seconds.
 -- Each unit can trigger once.
 --
@@ -8,7 +8,7 @@
 local strikeRetreat = {}
 
 local ENABLED = true
-local COVERED_LIMIT = 0.75          -- trigger only while less of the trip than this is covered
+local COVERED_LIMIT = 0.90          -- trigger only while less of the trip than this is covered
 local RETREAT_TICKS = 5 * 60
 local RETREAT_DISTANCE = 10         -- tiles away from the attacker
 local SPAWN_BOOST_TICKS = 5 * 60    -- length of the spawn speed sticker in StrikeManager

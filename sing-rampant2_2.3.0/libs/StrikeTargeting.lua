@@ -313,7 +313,7 @@ function strikeTargeting.selectStrikeTarget(map, label)
     }
     -- Products, oil, and raw-resources need producing zones at or above the 70th percentile
     -- of item output. Power zones need generating zones at or above the 70th percentile of
-    -- power generation. Outpost zones need that beat more than 30% of the other outposts on military buildings.
+    -- power generation. Outpost zones need to beat more than 30% of the other outposts on military buildings.
     local zoneCats = {}
     local producingRates = {}
     local powerRates = {}

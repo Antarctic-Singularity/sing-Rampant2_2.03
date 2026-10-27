@@ -18,6 +18,16 @@ data:extend({
         },
 
         {
+            type = "bool-setting",
+            name = "rampantFixed--allBitersRedMapColor",
+            description = "rampantFixed--allBitersRedMapColor",
+            setting_type = "startup",
+            default_value = false,
+            order = "b[modifier]-c2[trigger]",
+            per_user = false
+        },
+
+        {
             type = "int-setting",
             name = "rampantFixed--attackWaveMaxSize",
             setting_type = "runtime-global",

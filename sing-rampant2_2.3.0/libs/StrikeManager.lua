@@ -264,60 +264,112 @@ end
 
 -- ── MAIN ENTRY POINT ─────────────────────────────────────────────────────────
 
--- Path check: the line from the first nest (nearest that passes the direction and zone rules,
--- inside the nest distance band) to the target may cross at most one other zone that has a
--- category. Zones that are missing or have category NONE don't count. Samples are PATH_STEP tiles
--- apart, so a short clip across a zone corner can be missed.
-local PATH_STEP = 8
+-- Path check: for each direction (best score first), take the nearest nest that passes the
+-- direction and zone rules inside the nest distance band. The line from that nest to the target
+-- may cross at most one other zone that has a category. Zones that are missing or NONE don't count.
+-- Zones are walked exactly with a grid traversal; a line through a zone corner may count either
+-- neighbour. Every direction is tried until one passes.
 
+-- Zones in the order a straight line from (fromX, fromY) to (toX, toY) enters them
+-- (Amanatides-Woo grid traversal)
+local function zonesAlongLine(fromX, fromY, toX, toY, tileSize)
+    local x0, y0 = fromX / tileSize, fromY / tileSize
+    local x1, y1 = toX / tileSize, toY / tileSize
+    local zx, zy = math.floor(x0), math.floor(y0)
+    local endZX, endZY = math.floor(x1), math.floor(y1)
+    local dx, dy = x1 - x0, y1 - y0
+    local stepX = (dx >= 0) and 1 or -1
+    local stepY = (dy >= 0) and 1 or -1
+    local tDeltaX = (dx ~= 0) and math.abs(1 / dx) or math.huge
+    local tDeltaY = (dy ~= 0) and math.abs(1 / dy) or math.huge
+    local tMaxX = (dx > 0 and (zx + 1 - x0) * tDeltaX) or (dx < 0 and (x0 - zx) * tDeltaX) or math.huge
+    local tMaxY = (dy > 0 and (zy + 1 - y0) * tDeltaY) or (dy < 0 and (y0 - zy) * tDeltaY) or math.huge
+    local zones = {{zx = zx, zy = zy}}
+    local guard = 0
+    while not (zx == endZX and zy == endZY) and guard < 1000 do
+        guard = guard + 1
+        if tMaxX < tMaxY then
+            zx = zx + stepX
+            tMaxX = tMaxX + tDeltaX
+        else
+            zy = zy + stepY
+            tMaxY = tMaxY + tDeltaY
+        end
+        zones[#zones + 1] = {zx = zx, zy = zy}
+    end
+    return zones
+end
+
+-- Number of zones with a category that the line crosses, excluding the start and end zones
 local function countCrossedZones(map, fromPos, toPos)
-    local dx, dy = toPos.x - fromPos.x, toPos.y - fromPos.y
-    local length = math.sqrt(dx * dx + dy * dy)
-    local steps = math.max(1, math.floor(length / PATH_STEP))
     local tileSize = zoneManager.ZONE_TILE_SIZE
     local startZX, startZY = math.floor(fromPos.x / tileSize), math.floor(fromPos.y / tileSize)
     local endZX, endZY = math.floor(toPos.x / tileSize), math.floor(toPos.y / tileSize)
-    local seen, count = {}, 0
-    for i = 0, steps do
-        local t = i / steps
-        local zx = math.floor((fromPos.x + dx * t) / tileSize)
-        local zy = math.floor((fromPos.y + dy * t) / tileSize)
-        local key = zx .. ":" .. zy
-        local isEnd = (zx == startZX and zy == startZY) or (zx == endZX and zy == endZY)
-        if not seen[key] and not isEnd then
-            seen[key] = true
-            local zone = map.zones[zx] and map.zones[zx][zy]
+    local count = 0
+    for _, z in ipairs(zonesAlongLine(fromPos.x, fromPos.y, toPos.x, toPos.y, tileSize)) do
+        local isEnd = (z.zx == startZX and z.zy == startZY) or (z.zx == endZX and z.zy == endZY)
+        if not isEnd then
+            local zone = map.zones[z.zx] and map.zones[z.zx][z.zy]
             if zone and strikeTargeting.getZoneCategory(zone, map) then
                 count = count + 1
             end
         end
-        seen[key] = true
     end
     return count
 end
 
-local function pathCheck(map, target)
-    local strikeDirection = determineStrikeDirection(map, target)
-    if not strikeDirection then return false end
-    local tileSize = zoneManager.ZONE_TILE_SIZE
-    local targetX = target.tileX + tileSize / 2
-    local targetY = target.tileY + tileSize / 2
+-- Directions for a target, best score first (ties keep DIRECTIONS order)
+local function rankedDirections(map, target)
+    local _, _, scores = determineStrikeDirection(map, target)
+    local ranked = {}
+    for i, dir in ipairs(DIRECTIONS) do
+        ranked[#ranked + 1] = {dir = dir, score = (scores and scores[dir.name]) or 0, index = i}
+    end
+    table.sort(ranked, function(a, b)
+        if a.score ~= b.score then return a.score > b.score end
+        return a.index < b.index
+    end)
+    local out = {}
+    for _, r in ipairs(ranked) do out[#out + 1] = r.dir end
+    return out
+end
+
+-- Nearest nest inside the distance band that passes the direction and zone rules for this direction
+local function firstNestFor(map, target, dir, targetX, targetY)
     local minDistSq = strikeManager.MIN_NEST_DISTANCE * strikeManager.MIN_NEST_DISTANCE
     local maxDistSq = strikeManager.MAX_NEST_DISTANCE * strikeManager.MAX_NEST_DISTANCE
-    local firstNest, firstDistSq = nil, nil
+    local best, bestDistSq = nil, nil
     for nestChunk in pairs(map.chunkToNests or {}) do
         if nestChunk and nestChunk ~= -1 then
             local dx, dy = nestChunk.x - targetX, nestChunk.y - targetY
             local distSq = dx * dx + dy * dy
-            if distSq >= minDistSq and distSq <= maxDistSq and (not firstDistSq or distSq < firstDistSq)
-                and nestPassesDirectionAndZoneCheck(nestChunk, target, strikeDirection, map) == "ok" then
-                firstNest, firstDistSq = nestChunk, distSq
+            if distSq >= minDistSq and distSq <= maxDistSq and (not bestDistSq or distSq < bestDistSq)
+                and nestPassesDirectionAndZoneCheck(nestChunk, target, dir, map) == "ok" then
+                best, bestDistSq = nestChunk, distSq
             end
         end
     end
-    -- No suitable nest to test: let the nest search decide
-    if not firstNest then return true end
-    return countCrossedZones(map, {x = firstNest.x, y = firstNest.y}, {x = targetX, y = targetY}) <= 1
+    return best
+end
+
+-- Returns passed, direction. If no direction has a nest to test, passes with no direction so the
+-- nest search decides.
+local function pathCheck(map, target)
+    local tileSize = zoneManager.ZONE_TILE_SIZE
+    local targetX = target.tileX + tileSize / 2
+    local targetY = target.tileY + tileSize / 2
+    local anyNest = false
+    for _, dir in ipairs(rankedDirections(map, target)) do
+        local nest = firstNestFor(map, target, dir, targetX, targetY)
+        if nest then
+            anyNest = true
+            if countCrossedZones(map, {x = nest.x, y = nest.y}, {x = targetX, y = targetY}) <= 1 then
+                return true, dir
+            end
+        end
+    end
+    if not anyNest then return true, nil end
+    return false
 end
 
 function strikeManager.strike(map, surface, universe)
@@ -332,7 +384,12 @@ function strikeManager.strike(map, surface, universe)
     local bitersPerSquad = settings.global["rampantFixed--strikeBitersPerSquad"].value
 
     -- ── Target selection (shared with natural strikes) ────────────────────────
-    local target, selectedCat, populations = strikeTargeting.selectStrikeTarget(map, "[Strike]", function(candidate) return pathCheck(map, candidate) end)
+    local validatedZone, validatedDir
+    local target, selectedCat, populations = strikeTargeting.selectStrikeTarget(map, "[Strike]", function(candidate)
+        local ok, dir = pathCheck(map, candidate)
+        if ok then validatedZone, validatedDir = candidate, dir end
+        return ok
+    end)
     if not target then
         return false
     end
@@ -346,6 +403,7 @@ function strikeManager.strike(map, surface, universe)
 
     -- ── Direction ─────────────────────────────────────────────────────────────
     local strikeDirection, emptyCount, directionScores = determineStrikeDirection(map, target)
+    if validatedZone == target and validatedDir then strikeDirection = validatedDir end
     if not strikeDirection then
         game.print("[Strike] No valid strike direction found")
         return false

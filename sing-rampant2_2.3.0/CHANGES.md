@@ -53,6 +53,7 @@ Shared by both paths. Each invocation:
 - Once 75% is covered, normal distraction behaviour returns.
 - The same covered-distance rule is used by the single-unit retreat, so both systems switch at the same point.
 - Risk: if player buildings block the route before 75%, the squad may stall, since it won't attack them while in transit. Not yet tested in game.
+- Per unit: a squad unit that does not move for 2 seconds (120 ticks) while its squad is in transit gets its own move order with distraction `by_enemy`, re-applied every 30 ticks until transit ends. Units on a retreat keep their retreat order. Implemented in `checkStuckUnits` in `libs/StrikeRetreat.lua`. Not yet tested in game; the group command may fight this.
 
 ## Zone system
 

@@ -123,6 +123,15 @@ function zoneManager.scanZonePhase1(map, zone, surface)
         zone.militaryBuildingCount = zone.militaryBuildingCount + #buildings
     end
 
+    -- Military structures make every adjacent zone exist, so outpost checks never hit a gap
+    if zone.militaryBuildingCount > 0 then
+        for dx = -1, 1 do
+            for dy = -1, 1 do
+                zoneManager.getZoneByGridCoords(map, zone.zx + dx, zone.zy + dy)
+            end
+        end
+    end
+
     zone.scanPhase = 2
 end
 

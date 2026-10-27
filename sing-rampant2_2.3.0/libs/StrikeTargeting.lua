@@ -125,12 +125,15 @@ strikeTargeting.PRODUCT_TIER_WEIGHTS = {
 }
 
 function strikeTargeting.countAdjacentEmptyZones(map, zone)
-    -- Count how many adjacent zones (of 8 neighbors) have no category
+    -- Counts adjacent zones (of 8 neighbors) with category NONE. Returns the count and whether
+    -- every neighbor exists and has been scanned. A missing or unscanned neighbor is not counted
+    -- as empty; the caller treats the result as incomplete.
     if not map or not map.zones or not zone then
-        return 0
+        return 0, false
     end
 
     local emptyCount = 0
+    local complete = true
     local zx, zy = zone.zx, zone.zy
 
     -- Check all 8 adjacent positions
@@ -138,20 +141,16 @@ function strikeTargeting.countAdjacentEmptyZones(map, zone)
         for dy = -1, 1 do
             if dx ~= 0 or dy ~= 0 then  -- skip self
                 local neighborZone = map.zones[zx + dx] and map.zones[zx + dx][zy + dy]
-                if neighborZone then
-                    local neighborCat = strikeTargeting.getZoneCategory(neighborZone, map, true)
-                    if not neighborCat then
-                        emptyCount = emptyCount + 1
-                    end
-                else
-                    -- No zone generated = empty
+                if not neighborZone or neighborZone.isDirty then
+                    complete = false
+                elseif not strikeTargeting.getZoneCategory(neighborZone, map, true) then
                     emptyCount = emptyCount + 1
                 end
             end
         end
     end
 
-    return emptyCount
+    return emptyCount, complete
 end
 
 function strikeTargeting.dominatesAdjacentZones(map, zone)
@@ -196,8 +195,8 @@ function strikeTargeting.getZoneCategory(zone, map, skipOutpostCheck)
     -- If zone has 8+ military buildings AND 6+ empty adjacent zones, it's an outpost
     -- Skip this check if we're being called recursively to avoid infinite loops
     if map and not skipOutpostCheck and zone.militaryBuildingCount and zone.militaryBuildingCount >= 8 then
-        local emptyAdjacent = strikeTargeting.countAdjacentEmptyZones(map, zone)
-        if emptyAdjacent >= 6 then
+        local emptyAdjacent, complete = strikeTargeting.countAdjacentEmptyZones(map, zone)
+        if complete and emptyAdjacent >= 6 then
             return "outpost"
         end
     end

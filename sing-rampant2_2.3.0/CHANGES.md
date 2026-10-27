@@ -48,6 +48,12 @@ Shared by both paths. Each invocation:
 
 ---
 
+### Strike transit (`libs/SquadAttack.lua`, `attackMove`)
+- While a strike squad has covered less than 75% of its spawn-to-objective distance, its move order uses `distraction = none`, so it keeps walking when shot.
+- Once 75% is covered, normal distraction behaviour returns.
+- The same covered-distance rule is used by the single-unit retreat, so both systems switch at the same point.
+- Risk: if player buildings block the route before 75%, the squad may stall, since it won't attack them while in transit. Not yet tested in game.
+
 ## Zone system
 
 ### Outpost detection (`strikeTargeting.getZoneCategory`)

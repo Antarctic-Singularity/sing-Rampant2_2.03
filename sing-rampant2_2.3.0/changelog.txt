@@ -18,6 +18,7 @@ Date: 2026.10.27
       - Outposts must beat more than 30% of the other outposts by military building count
     - Zones that were just struck can't be struck again right away. If the picked zone is unavailable, the strike rerolls in the same category, then in a random category, before failing. A struck zone recovers one step per strike, up to 3 steps.
     - Natural strikes and the /r2-strike command now use the same strike logic, so both deploy squads the same way.
+    - Strike squads keep walking while they are shot, until they have covered 75% of the way to the target, instead of stopping to fight the buildings or biters near them
   Changes:
     - Natural strikes still need 20% evolution and wait for the cooldown. The cooldown is now 10 minutes between strikes.
     - /r2-strike ignores the evolution threshold and the cooldown, so it can be used at any time.

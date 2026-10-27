@@ -584,7 +584,9 @@ local function attackMove(map, squad)
 		end
 	elseif cmd_type == "move" then
         cmd = universe.compoundMoveCommand
-		if (attackChunk ~= -1) and (chunk ~= -1) and (chunk[BASE_DETECTION_PHEROMONE] >= attackChunk[BASE_DETECTION_PHEROMONE]) then			
+		if strikeInTransit then
+            cmd.commands[2].distraction = DEFINES_DISTRACTION_NONE	-- strike squads keep walking when shot
+		elseif (attackChunk ~= -1) and (chunk ~= -1) and (chunk[BASE_DETECTION_PHEROMONE] >= attackChunk[BASE_DETECTION_PHEROMONE]) then
             cmd.commands[2].distraction = DEFINES_DISTRACTION_BY_ANYTHING
 		elseif squad.rabid or squad.frenzy then
             cmd.commands[2].distraction = DEFINES_DISTRACTION_BY_ANYTHING

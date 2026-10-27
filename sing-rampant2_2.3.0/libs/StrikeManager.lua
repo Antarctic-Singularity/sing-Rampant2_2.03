@@ -300,22 +300,58 @@ local function zonesAlongLine(fromX, fromY, toX, toY, tileSize)
     return zones
 end
 
--- Number of zones with a category that the line crosses, excluding the start and end zones
-local function countCrossedZones(map, fromPos, toPos)
+-- Output value used for a zone's percentile in its own category
+local function zoneOutputValue(zone, cat)
+    if cat == "power" then return zone.powerGen or 0 end
+    if cat == "outpost" then return zone.militaryBuildingCount or 0 end
+    return zone.totalRate or 0 -- products, oil, raw-resources
+end
+
+-- Output values per category, for zones that have a category and output above 0
+local function buildOutputPopulations(map)
+    local pops = {}
+    for _, zone in ipairs(map.zonesByIndex) do
+        local cat = strikeTargeting.getZoneCategory(zone, map)
+        local value = cat and zoneOutputValue(zone, cat) or 0
+        if cat and value > 0 then
+            pops[cat] = pops[cat] or {}
+            table.insert(pops[cat], value)
+        end
+    end
+    return pops
+end
+
+-- True if the zone beats more than 10% of the other zones in its category
+local function isAboveTenthPercentile(zone, cat, pops)
+    local list = pops[cat]
+    local value = zoneOutputValue(zone, cat)
+    if not list or #list < 2 or value <= 0 then return false end
+    local below = 0
+    for _, other in ipairs(list) do
+        if other < value then below = below + 1 end
+    end
+    return below > 0.10 * (#list - 1)
+end
+
+-- Counts zones with a category that the line crosses (excluding start and end), and whether any
+-- crossed zone is above the 10th percentile of its category
+local function countCrossedZones(map, fromPos, toPos, pops)
     local tileSize = zoneManager.ZONE_TILE_SIZE
     local startZX, startZY = math.floor(fromPos.x / tileSize), math.floor(fromPos.y / tileSize)
     local endZX, endZY = math.floor(toPos.x / tileSize), math.floor(toPos.y / tileSize)
-    local count = 0
+    local count, blocked = 0, false
     for _, z in ipairs(zonesAlongLine(fromPos.x, fromPos.y, toPos.x, toPos.y, tileSize)) do
         local isEnd = (z.zx == startZX and z.zy == startZY) or (z.zx == endZX and z.zy == endZY)
         if not isEnd then
             local zone = map.zones[z.zx] and map.zones[z.zx][z.zy]
-            if zone and strikeTargeting.getZoneCategory(zone, map) then
+            local cat = zone and strikeTargeting.getZoneCategory(zone, map)
+            if cat then
                 count = count + 1
+                if isAboveTenthPercentile(zone, cat, pops) then blocked = true end
             end
         end
     end
-    return count
+    return count, blocked
 end
 
 -- Directions for a target, best score first (ties keep DIRECTIONS order)
@@ -352,9 +388,10 @@ local function firstNestFor(map, target, dir, targetX, targetY)
     return best
 end
 
--- Returns passed, direction. If no direction has a nest to test, passes with no direction so the
--- nest search decides.
-local function pathCheck(map, target)
+-- Returns passed, direction. A line fails if it crosses more than one zone with a category, or
+-- any zone above the 10th percentile of its category (even the first one). If no direction has a
+-- nest to test, passes with no direction so the nest search decides.
+local function pathCheck(map, target, pops)
     local tileSize = zoneManager.ZONE_TILE_SIZE
     local targetX = target.tileX + tileSize / 2
     local targetY = target.tileY + tileSize / 2
@@ -363,7 +400,8 @@ local function pathCheck(map, target)
         local nest = firstNestFor(map, target, dir, targetX, targetY)
         if nest then
             anyNest = true
-            if countCrossedZones(map, {x = nest.x, y = nest.y}, {x = targetX, y = targetY}) <= 1 then
+            local count, blocked = countCrossedZones(map, {x = nest.x, y = nest.y}, {x = targetX, y = targetY}, pops)
+            if not blocked and count <= 1 then
                 return true, dir
             end
         end
@@ -385,8 +423,9 @@ function strikeManager.strike(map, surface, universe)
 
     -- ── Target selection (shared with natural strikes) ────────────────────────
     local validatedZone, validatedDir
+    local outputPops = buildOutputPopulations(map)
     local target, selectedCat, populations = strikeTargeting.selectStrikeTarget(map, "[Strike]", function(candidate)
-        local ok, dir = pathCheck(map, candidate)
+        local ok, dir = pathCheck(map, candidate, outputPops)
         if ok then validatedZone, validatedDir = candidate, dir end
         return ok
     end)

@@ -5,6 +5,24 @@ local stickers = {}
 
 function stickers.makeSpeedStickers()
     data:extend({
+        -- Strike squad units: 1.5x speed for 5 seconds after spawning
+        {
+            type = "sticker",
+            name = "strikeSpeed-sticker-rampantFixed",
+            flags = {"not-on-map"},
+            target_movement_modifier = 1.5,
+            force_visibility = "ally",
+            duration_in_ticks = 5 * 60,
+        },
+        -- STRIKE RETREAT: 1.5x speed for 5 seconds after a strike unit retreats (see libs/StrikeRetreat.lua)
+        {
+            type = "sticker",
+            name = "retreatSpeed-sticker-rampantFixed",
+            flags = {"not-on-map"},
+            target_movement_modifier = 1.5,
+            force_visibility = "ally",
+            duration_in_ticks = 5 * 60,
+        },
 	
 			{
 			type = "sticker",

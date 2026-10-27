@@ -334,7 +334,7 @@ function strikeTargeting.selectStrikeTarget(map, label)
     table.sort(outpostRates)
     local minRate = producingRates[math.ceil(0.7 * #producingRates)] or math.huge
     local minPower = powerRates[math.ceil(0.7 * #powerRates)] or math.huge
-    local minOutpost = outpostRates[math.floor(0.30 * #outpostRates) + 1] or math.huge
+    local minOutpost = outpostRates[math.floor(0.30 * math.max(#outpostRates - 1, 0)) + 2] or math.huge
 
     for i, zone in ipairs(map.zonesByIndex) do
         local cat = zoneCats[i]

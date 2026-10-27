@@ -15,7 +15,7 @@ Date: 2026.10.27
     - Strikes now pick targets from stronger zones only:
       - Production zones (products, oil, raw resources) must be in the top 30% of producing zones by output
       - Power zones must be in the top 30% of generating zones by power output
-      - Outposts must be in the top 80% of outposts by military building count
+      - Outposts must be in the top 70% of outposts by military building count
     - Zones that were just struck can't be struck again right away. If the picked zone is unavailable, the strike rerolls in the same category, then in a random category, before failing. A struck zone recovers one step per strike, up to 3 steps.
     - Natural strikes and the /r2-strike command now use the same strike logic, so both deploy squads the same way.
   Changes:

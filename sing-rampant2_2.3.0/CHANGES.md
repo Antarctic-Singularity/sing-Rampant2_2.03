@@ -18,7 +18,7 @@ Shared by both paths. Each invocation:
 2. Builds the eligible zones per category:
    - **products, oil, raw-resources:** producing zones (`totalRate > 0`) at or above the 70th percentile of `totalRate`.
    - **power:** generating zones (`powerGen > 0`) at or above the 70th percentile of `powerGen`.
-   - **outpost:** zones with `militaryBuildingCount` at or above the 20th percentile of outposts.
+   - **outpost:** zones with `militaryBuildingCount` at or above the 30th percentile of outposts.
 3. Picks a category at random, then a zone. Products are weighted by share squared times tier value; other categories are uniform.
 4. If the zone's `strikeAllow` is 0, rerolls in the same category, then in a random category. If that is also 0, the strike fails.
 - The picked zone is set to `strikeAllow = 0` and remembered as the last struck zone (`markStruck`).

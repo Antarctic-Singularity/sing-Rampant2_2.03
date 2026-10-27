@@ -313,7 +313,7 @@ function strikeTargeting.selectStrikeTarget(map, label)
     }
     -- Products, oil, and raw-resources need producing zones at or above the 70th percentile
     -- of item output. Power zones need generating zones at or above the 70th percentile of
-    -- power generation. Outpost zones need at or above the 20th percentile of military buildings.
+    -- power generation. Outpost zones need at or above the 30th percentile of military buildings.
     local zoneCats = {}
     local producingRates = {}
     local powerRates = {}
@@ -334,7 +334,7 @@ function strikeTargeting.selectStrikeTarget(map, label)
     table.sort(outpostRates)
     local minRate = producingRates[math.ceil(0.7 * #producingRates)] or math.huge
     local minPower = powerRates[math.ceil(0.7 * #powerRates)] or math.huge
-    local minOutpost = outpostRates[math.ceil(0.20 * #outpostRates)] or math.huge
+    local minOutpost = outpostRates[math.ceil(0.30 * #outpostRates)] or math.huge
 
     for i, zone in ipairs(map.zonesByIndex) do
         local cat = zoneCats[i]

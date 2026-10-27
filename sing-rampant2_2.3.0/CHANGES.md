@@ -63,7 +63,7 @@ Shared by both paths. Each invocation:
 - Walks the straight line from that nest to the target zone by zone (exact grid traversal). Missing zones and category NONE zones don't count. The start and target zones are excluded.
 - More than one counted zone on the path fails the pick, so the normal same-category and random-category rerolls apply.
 - A line passing exactly through a zone corner may count either neighbouring zone.
-- Blocked if any crossed zone beats more than 10% of the other zones in its own category (products, oil, and raw use item output; power uses powerGen; outposts use military building count). This applies even to the first zone crossed.
+- Blocked if any crossed zone beats more than 10% of the other zones in its own category (products, oil, and raw use item output; power uses powerGen; outposts use military building count). This applies even to the first zone crossed. The target zone and its 8 neighbours are exempt from this rule.
 
 ## Zone system
 

@@ -62,6 +62,7 @@ Shared by both paths. Each invocation:
 - Runs after the existing direction and zone rules. For each direction, tried in random order (each at most once per target), it uses the nearest nest that passes those rules and lies within the nest distance band. The first direction that passes is used for the strike.
 - Walks the straight line from that nest to the target zone by zone (exact grid traversal). Missing zones and category NONE zones don't count. The start and target zones are excluded.
 - More than one counted zone on the path fails the pick, so the normal same-category and random-category rerolls apply.
+- If no direction has a testable nest, the target fails and the normal reroll rules apply. (Previously it passed.)
 - A line passing exactly through a zone corner may count either neighbouring zone.
 - Blocked if any crossed zone beats more than 10% of the other zones in its own category (products, oil, and raw use item output; power uses powerGen; outposts use military building count). This applies even to the first zone crossed. The target zone is exempt from this rule.
 

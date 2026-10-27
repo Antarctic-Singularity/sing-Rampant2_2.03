@@ -557,7 +557,7 @@ local function attackMove(map, squad)
 		cmd_type = "move"
     end
 
-	-- Strike: stay in transit (move, no distraction) until 75% of the spawn-to-objective distance is covered
+	-- Strike: stay in transit (move, no distraction) until 90% of the spawn-to-objective distance is covered
 	local strikeInTransit = false
 	if squad.strike2 and squad.strikeObjective and squad.strikeStart then
 		local totalDist = math.sqrt((squad.strikeStart.x - squad.strikeObjective.x)^2 +
@@ -565,7 +565,7 @@ local function attackMove(map, squad)
 		local remainingDist = math.sqrt((groupPosition.x - squad.strikeObjective.x)^2 +
 										(groupPosition.y - squad.strikeObjective.y)^2)
 		local covered = (totalDist > 0) and (1 - remainingDist / totalDist) or 1
-		if covered < 0.75 then
+		if covered < 0.90 then
 			cmd_type = "move"; strikeInTransit = true
 		end
 	end

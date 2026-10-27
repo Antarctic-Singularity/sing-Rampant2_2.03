@@ -18,7 +18,7 @@ Date: 2026.10.27
       - Outposts must beat more than 30% of the other outposts by military building count
     - Zones that were just struck can't be struck again right away. If the picked zone is unavailable, the strike tries up to 3 zones in that category, then rerolls the category, before failing. A struck zone recovers one step per strike, up to 3 steps.
     - Natural strikes and the /r2-strike command now use the same strike logic, so both deploy squads the same way.
-    - Strike squads keep walking while they are shot, until they have covered 75% of the way to the target, instead of stopping to fight the buildings or biters near them
+    - Strike squads keep walking while they are shot, until they have covered 90% of the way to the target, instead of stopping to fight the buildings or biters near them
     - Strike squad units that stop moving for 2 seconds while still walking in start reacting to enemies again, and keep doing so until the squad arrives
     - Strikes check the route from the attacking nest to the target. A route fails if it passes through more than one other zone with a category, or through any zone above the 10th percentile of its category (the target zone is exempt). The strike rolls approach directions at random and validates each one, then picks a different target if none pass
     - New startup setting: make all biter races (units, spitters, spawners and worms) show as red on the map. Off by default; takes effect after a restart

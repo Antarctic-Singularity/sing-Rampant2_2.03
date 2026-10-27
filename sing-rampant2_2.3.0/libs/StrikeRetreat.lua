@@ -93,7 +93,7 @@ local function squadInTransit(squad)
     if total <= 0 then return false end
     local pos = squad.group.position
     local remaining = math.sqrt((pos.x - squad.strikeObjective.x) ^ 2 + (pos.y - squad.strikeObjective.y) ^ 2)
-    return (1 - remaining / total) < 0.75
+    return (1 - remaining / total) < 0.90
 end
 
 local function checkStuckUnits(universe)

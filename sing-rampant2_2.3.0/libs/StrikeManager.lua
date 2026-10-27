@@ -355,7 +355,7 @@ end
 
 -- Returns passed, direction. A line fails if it crosses more than one zone with a category, or
 -- any zone above the 10th percentile of its category (even the first one). If no direction has a
--- nest to test, passes with no direction so the nest search decides.
+-- nest to test, the target fails so it rerolls.
 local function pathCheck(map, target, pops)
     local tileSize = zoneManager.ZONE_TILE_SIZE
     local targetX = target.tileX + tileSize / 2
@@ -371,7 +371,7 @@ local function pathCheck(map, target, pops)
             end
         end
     end
-    if not anyNest then return true, nil end
+    if not anyNest then return false end
     return false
 end
 

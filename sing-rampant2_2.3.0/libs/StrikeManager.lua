@@ -342,12 +342,14 @@ local function countCrossedZones(map, fromPos, toPos, pops)
     local count, blocked = 0, false
     for _, z in ipairs(zonesAlongLine(fromPos.x, fromPos.y, toPos.x, toPos.y, tileSize)) do
         local isEnd = (z.zx == startZX and z.zy == startZY) or (z.zx == endZX and z.zy == endZY)
+        -- The target zone and its 8 neighbours are exempt from the 10th percentile rule
+        local nearTarget = math.abs(z.zx - endZX) <= 1 and math.abs(z.zy - endZY) <= 1
         if not isEnd then
             local zone = map.zones[z.zx] and map.zones[z.zx][z.zy]
             local cat = zone and strikeTargeting.getZoneCategory(zone, map)
             if cat then
                 count = count + 1
-                if isAboveTenthPercentile(zone, cat, pops) then blocked = true end
+                if not nearTarget and isAboveTenthPercentile(zone, cat, pops) then blocked = true end
             end
         end
     end

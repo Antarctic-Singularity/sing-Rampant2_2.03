@@ -557,7 +557,7 @@ local function attackMove(map, squad)
 		cmd_type = "move"
     end
 
-	-- Strike2: Force move-mode until close to objective to avoid premature engagement
+	-- Strike: Force move-mode until close to objective to avoid premature engagement
 	if squad.strike2 and squad.strikeObjective then
 		local distToObjective = math.sqrt((groupPosition.x - squad.strikeObjective.x)^2 +
 										  (groupPosition.y - squad.strikeObjective.y)^2)

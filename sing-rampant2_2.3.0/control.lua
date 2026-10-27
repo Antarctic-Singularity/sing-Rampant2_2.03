@@ -1,4 +1,4 @@
--- Copyright (C) 2022  Dimm2101
+-- Copyright (C) 2022  Dimm2101 
 
 -- This program is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -44,9 +44,7 @@ local zoneManager = require("libs/ZoneManager")
 local targetRanker = require("libs/TargetRanker")
 local debugCommands = require("libs/DebugCommands")
 local strikeManager = require("libs/StrikeManager")
-local strike2Manager = require("libs/Strike2Manager")
-local strike3Manager = require("libs/Strike3Manager")
-local strike4Manager = require("libs/Strike4Manager")
+local strikeRetreat = require("libs/StrikeRetreat") -- STRIKE RETREAT
 
 local hasSpaceAgeMod = script.active_mods["space-age"]
 
@@ -1251,6 +1249,7 @@ local function fillAndReturnUnitProtections(entity)
 end	
  
 local function onEntityDamaged(event)
+	strikeRetreat.onUnitDamaged(event, universe) -- STRIKE RETREAT
 	if not event.entity then
 		return
 	end
@@ -1628,6 +1627,7 @@ script.on_nth_tick(30,
 	function()
 		if universe then
 			undergroundAttack.processUndergroundSquads(universe)
+				strikeRetreat.onTick() -- STRIKE RETREAT
 		end
 	end
 )
@@ -2123,99 +2123,27 @@ local function r2StatusCmd(event)
 end
 commands.add_command('r2-status', "Print zone scanning and strike system status", r2StatusCmd)
 
-local function r2TriggerStrikeCmd(event)
-	local map = universe.activeMap
+
+local function r2Strike(event)
+	local universe = storage.universe
+	if not universe then
+		game.print("[Strike] Universe not initialized")
+		return
+	end
+	local map = universe.maps and universe.maps[1]
 	if not map then
-		game.print("No active map")
+		game.print("[Strike] No map found")
 		return
 	end
 	if not map.strikeState then
 		game.print("[Strike] State not initialized")
 		return
 	end
-	-- Force-bypass the cooldown for this single trigger.
-	-- processStrikes will internally reset cooldownEndTick to tick + STRIKE_COOLDOWN_DURATION
-	-- after firing, which prevents the periodic on_nth_tick handler from auto-firing
-	-- a second strike. To trigger again, just run /r2-trigger-strike again.
-	map.strikeState.cooldownEndTick = 0
-	strikeManager.processStrikes(map, map.surface, universe)
-	game.print("[Strike] Manually triggered. Run /r2-trigger-strike again for another.")
-end
-commands.add_command('r2-trigger-strike', "Force-trigger a strike now (bypasses cooldown)", r2TriggerStrikeCmd)
-
-local function r2TriggerStrike2Cmd(event)
-	if not storage.universe then
-		game.print("Universe not initialized")
-		return
-	end
-	local universe = storage.universe
-	local map = universe.activeMap
-	if not map then
-		game.print("No active map")
-		return
-	end
-	if not map.strikeState then
-		game.print("[Strike2] State not initialized")
-		return
-	end
-	-- Strike2 initiates immediately without cooldown bypass needed
-	-- Set regular strike cooldown to 10 minutes as side effect
-	local success = strike2Manager.initiateStrike2(map, map.surface, universe)
-	if success then
-		game.print("[Strike2] Directional strike initiated successfully!")
-	else
-		game.print("[Strike2] Failed to initiate directional strike")
+	if not strikeManager.strike(map, map.surface, universe) then
+		game.print("[Strike] Failed to initiate spawn strike")
 	end
 end
-commands.add_command('r2-trigger-strike2', "Force-trigger a Strike2 directional attack (sets strike cooldown to 10 min)", r2TriggerStrike2Cmd)
-
-local function r2TriggerStrike3Cmd(event)
-	local universe = storage.universe
-	if not universe then
-		game.print("[Strike3] Universe not initialized")
-		return
-	end
-	local map = universe.maps and universe.maps[1]
-	if not map then
-		game.print("[Strike3] No map found")
-		return
-	end
-	if not map.strikeState then
-		game.print("[Strike3] State not initialized")
-		return
-	end
-	local success = strike3Manager.initiateStrike3(map, map.surface, universe)
-	if success then
-		game.print("[Strike3] Spawn strike initiated successfully!")
-	else
-		game.print("[Strike3] Failed to initiate spawn strike")
-	end
-end
-commands.add_command('r2-trigger-strike3', "Force-trigger a Strike3 spawn-based directional attack", r2TriggerStrike3Cmd)
-
-local function r2TriggerStrike4Cmd(event)
-	local universe = storage.universe
-	if not universe then
-		game.print("[Strike4] Universe not initialized")
-		return
-	end
-	local map = universe.maps and universe.maps[1]
-	if not map then
-		game.print("[Strike4] No map found")
-		return
-	end
-	if not map.strikeState then
-		game.print("[Strike4] State not initialized")
-		return
-	end
-	local success = strike4Manager.initiateStrike4(map, map.surface, universe)
-	if success then
-		game.print("[Strike4] 2-squad spawn strike initiated!")
-	else
-		game.print("[Strike4] Failed to initiate spawn strike")
-	end
-end
-commands.add_command('r2-trigger-strike4', "Force-trigger a Strike4 2-squad spawn-based directional attack", r2TriggerStrike4Cmd)
+commands.add_command('r2-strike', "Force-trigger a strike now (bypasses evolution and cooldown checks)", r2Strike)
 
 local function r2PauseAttacksCmd(event)
 	if not storage.universe then
@@ -2232,7 +2160,7 @@ local function r2PauseAttacksCmd(event)
 	universe.attackPauseEndTick = game.tick + pauseDuration
 	game.print("[Rampant] ========== AUTO-ATTACKS PAUSED ==========")
 	game.print("[Rampant] Duration: 2 minutes (120 seconds)")
-	game.print("[Rampant] Command-triggered attacks (/r2-trigger-strike, /r2-trigger-strike2, /r2-trigger-strike3, /r2-trigger-strike4) still work")
+	game.print("[Rampant] Command-triggered attacks (/r2-strike) still work")
 	game.print("[Rampant] Use /r2-resume-attacks to cancel early")
 	game.print("[Rampant] ==========================================")
 end

@@ -625,6 +625,30 @@ data:extend({
         },
 
         {
+            type = "int-setting",
+            name = "rampantFixed--strikeSquadsPerStrike",
+            description = "rampantFixed--strikeSquadsPerStrike",
+            setting_type = "runtime-global",
+            minimum_value = 1,
+            maximum_value = 10,
+            default_value = 3,
+            order = "m[total]-d6[ai]zz",
+            per_user = false
+        },
+
+        {
+            type = "int-setting",
+            name = "rampantFixed--strikeBitersPerSquad",
+            description = "rampantFixed--strikeBitersPerSquad",
+            setting_type = "runtime-global",
+            minimum_value = 1,
+            maximum_value = 500,
+            default_value = 60,
+            order = "m[total]-d7[ai]zz",
+            per_user = false
+        },
+
+        {
             type = "double-setting",
             name = "rampantFixed--settlementsProbability",
             setting_type = "runtime-global",

@@ -280,54 +280,133 @@ function strikeTargeting.calculateProductValue(zone)
     return totalValue
 end
 
-function strikeTargeting.selectStrikeTargetInCategory(map, category)
-    -- Find the best zone to strike in a given category
-    if not map or not map.zonesByIndex then
-        return nil
-    end
+-- ── Shared strike target selection (/r2-strike and natural strikes use this) ───
+-- strikeAllow: a zone struck by any strike drops to 0 and can't be picked until it recovers.
+-- Each invocation recovers +1 on every zone except the one struck in the previous invocation,
+-- so that zone stays at 0 for one invocation. Nil means full allowance.
+strikeTargeting.STRIKE_ALLOW_MAX = 3
 
-    local bestZone = nil
-    local bestScore = 0
+function strikeTargeting.getStrikeAllow(zone)
+    return zone.strikeAllow or strikeTargeting.STRIKE_ALLOW_MAX
+end
 
+function strikeTargeting.markStruck(map, zone)
+    zone.strikeAllow = 0
+    map.strikeAllowLastStruck = zone
+end
+
+-- Picks the zone for one strike invocation. Returns target, selectedCat, and the
+-- populations used by the percentile rules. Returns nil if no zone can be struck.
+-- Does not mark the zone; the caller marks it once the strike is committed.
+function strikeTargeting.selectStrikeTarget(map, label)
+    -- Recover strikeAllow for this invocation, except the zone struck in the previous one
     for _, zone in ipairs(map.zonesByIndex) do
-        if zone.totalRate > 0 then
-            local zoneCat = strikeTargeting.getZoneCategory(zone, map)
+        if zone ~= map.strikeAllowLastStruck then
+            zone.strikeAllow = math.min(strikeTargeting.STRIKE_ALLOW_MAX, strikeTargeting.getStrikeAllow(zone) + 1)
+        end
+    end
+    map.strikeAllowLastStruck = nil
 
-            if zoneCat == category then
-                local score = 0
+    local categoryZones = {
+        ["products"] = {}, ["power"] = {}, ["oil"] = {},
+        ["raw-resources"] = {}, ["outpost"] = {}
+    }
+    -- Products, oil, and raw-resources need producing zones at or above the 70th percentile
+    -- of item output. Power zones need generating zones at or above the 70th percentile of
+    -- power generation. Outpost zones need at or above the 20th percentile of military buildings.
+    local zoneCats = {}
+    local producingRates = {}
+    local powerRates = {}
+    local outpostRates = {}
+    for i, zone in ipairs(map.zonesByIndex) do
+        local cat = strikeTargeting.getZoneCategory(zone, map)
+        zoneCats[i] = cat
+        if cat and cat ~= "power" and cat ~= "outpost" and (zone.totalRate or 0) > 0 then
+            producingRates[#producingRates + 1] = zone.totalRate
+        elseif cat == "power" and (zone.powerGen or 0) > 0 then
+            powerRates[#powerRates + 1] = zone.powerGen
+        elseif cat == "outpost" then
+            outpostRates[#outpostRates + 1] = zone.militaryBuildingCount or 0
+        end
+    end
+    table.sort(producingRates)
+    table.sort(powerRates)
+    table.sort(outpostRates)
+    local minRate = producingRates[math.ceil(0.7 * #producingRates)] or math.huge
+    local minPower = powerRates[math.ceil(0.7 * #powerRates)] or math.huge
+    local minOutpost = outpostRates[math.ceil(0.20 * #outpostRates)] or math.huge
 
-                if category == "products" then
-                    -- For products, score = tier-weighted value
-                    score = strikeTargeting.calculateProductValue(zone)
-                else
-                    -- For other categories, score = production rate
-                    score = zone.totalRate
-                end
-
-                if score > bestScore then
-                    bestScore = score
-                    bestZone = zone
-                end
+    for i, zone in ipairs(map.zonesByIndex) do
+        local cat = zoneCats[i]
+        if cat and categoryZones[cat] then
+            local eligible
+            if cat == "outpost" then
+                eligible = (zone.militaryBuildingCount or 0) >= minOutpost
+            elseif cat == "power" then
+                eligible = (zone.powerGen or 0) > 0 and zone.powerGen >= minPower
+            else
+                eligible = (zone.totalRate or 0) > 0 and zone.totalRate >= minRate
+            end
+            if eligible then
+                table.insert(categoryZones[cat], zone)
             end
         end
     end
 
-    return bestZone
-end
-
-function strikeTargeting.hasZonesInCategory(map, category)
-    -- Check if any zones exist in this category
-    if not map or not map.zonesByIndex then
-        return false
+    local availableCats = {}
+    for cat, zones in pairs(categoryZones) do
+        if #zones > 0 then table.insert(availableCats, cat) end
+    end
+    if #availableCats == 0 then
+        game.print(label .. " No targetable zones found")
+        return nil
     end
 
-    for _, zone in ipairs(map.zonesByIndex) do
-        if zone.totalRate > 0 and strikeTargeting.getZoneCategory(zone, map) == category then
-            return true
+    -- Picks a zone within a category (products are weighted by share of output)
+    local function pickZoneInCategory(cat)
+        local targetZones = categoryZones[cat]
+        if cat ~= "products" then
+            return targetZones[math.random(1, #targetZones)]
         end
+        local globalTotalRate = 0
+        for _, zone in ipairs(map.zonesByIndex) do
+            globalTotalRate = globalTotalRate + (zone.totalRate or 0)
+        end
+        local weights, totalWeight = {}, 0
+        for i, zone in ipairs(targetZones) do
+            local share = (globalTotalRate > 0) and ((zone.totalRate or 0) / globalTotalRate) or 0
+            local w = (share * share) * (1 + (strikeTargeting.calculateProductValue(zone) or 0) * 0.1)
+            if w < 0.0001 then w = 0.0001 end
+            weights[i] = w
+            totalWeight = totalWeight + w
+        end
+        local roll, cumulative = math.random() * totalWeight, 0
+        local chosen = targetZones[#targetZones]
+        for i, w in ipairs(weights) do
+            cumulative = cumulative + w
+            if roll <= cumulative then chosen = targetZones[i]; break end
+        end
+        return chosen
     end
 
-    return false
+    math.randomseed(game.tick + game.tick)
+    local selectedCat = availableCats[math.random(1, #availableCats)]
+    local target = pickZoneInCategory(selectedCat)
+
+    -- Picked zone is at 0 allowance: reroll in the same category, then in a random category
+    if strikeTargeting.getStrikeAllow(target) == 0 then
+        target = pickZoneInCategory(selectedCat)
+    end
+    if strikeTargeting.getStrikeAllow(target) == 0 then
+        selectedCat = availableCats[math.random(1, #availableCats)]
+        target = pickZoneInCategory(selectedCat)
+    end
+    if strikeTargeting.getStrikeAllow(target) == 0 then
+        game.print(label .. " Failed: rerolled zones are all at 0 strike allowance")
+        return nil
+    end
+
+    return target, selectedCat, {producingRates = producingRates, powerRates = powerRates, outpostRates = outpostRates}
 end
 
 strikeTargetingG = strikeTargeting

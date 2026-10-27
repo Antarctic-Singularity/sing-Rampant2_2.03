@@ -40,38 +40,15 @@ local DIRECTIONS = {
 
 -- ── DIRECTION & ZONE CHECKS ───────────────────────────────────────────────────
 
-local function determineStrikeDirection(map, targetZone)
-    if not targetZone then return nil, 0 end
-    local zx, zy = targetZone.zx, targetZone.zy
-    local bestDir, maxEmpty = nil, -1
-    local directionScores = {}
-    for _, dir in ipairs(DIRECTIONS) do
-        local emptyCount = 0
-        local px, py = zx + dir.dx, zy + dir.dy
-        if not map.zones[px] or not map.zones[px][py] then
-            emptyCount = emptyCount + 1
-        elseif not strikeTargeting.getZoneCategory(map.zones[px][py], map, true) then
-            emptyCount = emptyCount + 1
-        end
-        local p1x, p1y = zx + dir.dx, zy + dir.dy - dir.dx
-        local p2x, p2y = zx + dir.dx, zy + dir.dy + dir.dx
-        if not map.zones[p1x] or not map.zones[p1x][p1y] then
-            emptyCount = emptyCount + 1
-        elseif not strikeTargeting.getZoneCategory(map.zones[p1x][p1y], map, true) then
-            emptyCount = emptyCount + 1
-        end
-        if not map.zones[p2x] or not map.zones[p2x][p2y] then
-            emptyCount = emptyCount + 1
-        elseif not strikeTargeting.getZoneCategory(map.zones[p2x][p2y], map, true) then
-            emptyCount = emptyCount + 1
-        end
-        directionScores[dir.name] = emptyCount
-        if emptyCount > maxEmpty then
-            maxEmpty = emptyCount
-            bestDir = dir
-        end
+-- Random order of all 8 directions (Fisher-Yates). Each is tried at most once per target.
+local function shuffledDirections()
+    local dirs = {}
+    for i, dir in ipairs(DIRECTIONS) do dirs[i] = dir end
+    for i = #dirs, 2, -1 do
+        local j = math.random(1, i)
+        dirs[i], dirs[j] = dirs[j], dirs[i]
     end
-    return bestDir, maxEmpty, directionScores
+    return dirs
 end
 
 local function nestPassesDirectionAndZoneCheck(nestChunk, targetZone, strikeDirection, map)
@@ -357,20 +334,6 @@ local function countCrossedZones(map, fromPos, toPos, pops)
 end
 
 -- Directions for a target, best score first (ties keep DIRECTIONS order)
-local function rankedDirections(map, target)
-    local _, _, scores = determineStrikeDirection(map, target)
-    local ranked = {}
-    for i, dir in ipairs(DIRECTIONS) do
-        ranked[#ranked + 1] = {dir = dir, score = (scores and scores[dir.name]) or 0, index = i}
-    end
-    table.sort(ranked, function(a, b)
-        if a.score ~= b.score then return a.score > b.score end
-        return a.index < b.index
-    end)
-    local out = {}
-    for _, r in ipairs(ranked) do out[#out + 1] = r.dir end
-    return out
-end
 
 -- Nearest nest inside the distance band that passes the direction and zone rules for this direction
 local function firstNestFor(map, target, dir, targetX, targetY)
@@ -398,7 +361,7 @@ local function pathCheck(map, target, pops)
     local targetX = target.tileX + tileSize / 2
     local targetY = target.tileY + tileSize / 2
     local anyNest = false
-    for _, dir in ipairs(rankedDirections(map, target)) do
+    for _, dir in ipairs(shuffledDirections()) do
         local nest = firstNestFor(map, target, dir, targetX, targetY)
         if nest then
             anyNest = true
@@ -443,18 +406,13 @@ function strikeManager.strike(map, surface, universe)
     local targetPos = {x = targetX, y = targetY}
 
     -- ── Direction ─────────────────────────────────────────────────────────────
-    local strikeDirection, emptyCount, directionScores = determineStrikeDirection(map, target)
-    if validatedZone == target and validatedDir then strikeDirection = validatedDir end
-    if not strikeDirection then
-        game.print("[Strike] No valid strike direction found")
-        return false
-    end
+    local strikeDirection = (validatedZone == target and validatedDir) or DIRECTIONS[math.random(1, #DIRECTIONS)]
 
     strikeTargeting.markStruck(map, target)
 
     game.print("[Strike] Target [gps=" .. math.floor(targetX) .. "," .. math.floor(targetY)
         .. "," .. surface.name .. "] | direction " .. strikeDirection.name
-        .. " (empty zones: " .. emptyCount .. ")")
+        .. "")
 
     if debugPrint then
         -- Percentile = share of eligible-population zones whose output is at or below this zone's
@@ -476,11 +434,6 @@ function strikeManager.strike(map, surface, universe)
             target.zx, target.zy, selectedCat, value, unit, percentileText))
     end
 
-    if debugPrint then
-        local s = ""
-        for _, dir in ipairs(DIRECTIONS) do s = s .. dir.name .. ":" .. (directionScores[dir.name] or 0) .. " " end
-        game.print("[Strike] Direction scores: " .. s)
-    end
 
     -- ── Nest pool ─────────────────────────────────────────────────────────────
     local nestPool = map.chunkToNests
